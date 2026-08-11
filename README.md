@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Club Day — Check-in & Best Club Vote
 
-## Getting Started
+Web app cho sự kiện club sinh viên: đăng ký bằng MSSV, staff check-in bằng QR (fallback MSSV), đủ 3 check-in thì vote Best Club, kèm admin dashboard.
 
-First, run the development server:
+**Hướng dẫn sử dụng:** [HUONG-DAN-SU-DUNG.md](./HUONG-DAN-SU-DUNG.md)  
+**Deploy Vercel + Neon:** [DEPLOY.md](./DEPLOY.md)
+
+## Stack
+
+- Next.js (App Router) + TypeScript + Tailwind
+- Auth.js (next-auth) credentials — roles: `STUDENT`, `CLUB_STAFF`, `ADMIN`
+- Prisma 7 + **PostgreSQL (Neon)** + `@prisma/adapter-pg`
+- Hosting: **Vercel** (HTTPS — cần cho camera mobile)
+
+## Quick start (local với Neon)
+
+1. Tạo project free trên [Neon](https://neon.tech), copy connection string **Pooled**.
+2. Cấu hình env:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
+# Điền DATABASE_URL, AUTH_SECRET, QR_SECRET
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Cài & seed:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run db:setup
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Mở [http://localhost:3000](http://localhost:3000) (hoặc port Next.js báo nếu 3000 bận).
 
-## Learn More
+### Tài khoản demo (sau seed)
 
-To learn more about Next.js, take a look at the following resources:
+| Role   | Username / MSSV     | Password    |
+|--------|---------------------|-------------|
+| Admin  | `admin`             | password123 |
+| Staff  | `staff1` … `staff6` | password123 |
+| Student| `SV202601` … `603`  | password123 |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Luồng sử dụng
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Sinh viên** đăng ký/đăng nhập → trang QR → đưa QR cho staff.
+2. **Staff** đăng nhập → `/scan` → quét QR hoặc nhập MSSV.
+3. Sinh viên đủ **3 check-in** → `/vote` (chỉ vote club đã check-in, 1 lần).
+4. **Admin** → `/admin`: clubs, staff, danh sách SV, BXH vote, export CSV.
 
-## Deploy on Vercel
+## Biến môi trường
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Xem [`.env.example`](.env.example):
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `DATABASE_URL` — Neon Postgres (Pooled, `?sslmode=require`)
+- `AUTH_SECRET` — `openssl rand -base64 32`
+- `QR_SECRET` — secret ký JWT trong QR
+- `NEXTAUTH_URL` / `AUTH_URL` — URL app (`http://localhost:3000` local, `https://….vercel.app` prod)
+
+## Deploy
+
+Chi tiết từng bước: **[DEPLOY.md](./DEPLOY.md)**
+
+Tóm tắt: GitHub → Neon DB → Vercel env → deploy → cập nhật `NEXTAUTH_URL` → test camera trên điện thoại (HTTPS).
+
+## Scripts
+
+- `npm run dev` — dev server
+- `npm run db:setup` — migrate deploy + seed
+- `npm run db:seed` — seed (xoá & tạo lại data demo)
+- `npm run db:migrate:deploy` — áp migration (CI/Vercel)
+- `npm run build` — `prisma generate && migrate deploy && next build`

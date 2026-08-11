@@ -1,69 +1,87 @@
-import Image from "next/image";
+import Link from "next/link";
+import { auth } from "@/lib/auth";
+import { homeForRole } from "@/lib/session";
+import { AppHeader } from "@/components/app-header";
 
-export default function Home() {
+export default async function HomePage() {
+  const session = await auth();
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <AppHeader user={session?.user} />
+      <main className="relative flex flex-1 flex-col">
+        <section className="relative isolate min-h-[78vh] overflow-hidden">
+          <div
+            aria-hidden
+            className="absolute inset-0 bg-[linear-gradient(135deg,var(--hero-a)_0%,var(--hero-b)_55%,#245f4f_100%)]"
+          />
+          <div
+            aria-hidden
+            className="absolute -right-20 top-10 h-72 w-72 rounded-full bg-[var(--hero-c)]/30 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="absolute inset-0 opacity-30 [background-image:radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.35)_1px,transparent_0)] [background-size:22px_22px]"
+          />
+          <div className="relative mx-auto flex max-w-5xl flex-col justify-end gap-6 px-4 pb-16 pt-28 text-white md:pt-36">
+            <p className="font-[family-name:var(--font-display)] text-5xl leading-none tracking-tight md:text-7xl">
+              Club Day
+            </p>
+            <h1 className="max-w-xl text-lg text-white/85 md:text-xl">
+              Check-in qua các club, đủ 3 điểm thì vote Best Club.
+            </h1>
+            <div className="flex flex-wrap gap-3">
+              {session?.user ? (
+                <Link
+                  href={homeForRole(session.user.role)}
+                  className="rounded-md bg-[var(--hero-c)] px-5 py-3 font-semibold text-[var(--hero-a)] transition hover:brightness-105"
+                >
+                  Vào khu vực của bạn
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/register"
+                    className="rounded-md bg-[var(--hero-c)] px-5 py-3 font-semibold text-[var(--hero-a)] transition hover:brightness-105"
+                  >
+                    Đăng ký sinh viên
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="rounded-md border border-white/40 px-5 py-3 text-white transition hover:bg-white/10"
+                  >
+                    Đăng nhập
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto grid max-w-5xl gap-8 px-4 py-16 md:grid-cols-3">
+          {[
+            {
+              title: "Sinh viên",
+              body: "Tạo tài khoản bằng MSSV, hiện QR để staff check-in.",
+            },
+            {
+              title: "Club staff",
+              body: "Quét QR hoặc nhập MSSV để đánh dấu sinh viên đã đến booth.",
+            },
+            {
+              title: "Best Club",
+              body: "Đủ 3 check-in là mở vote — mỗi sinh viên một phiếu.",
+            },
+          ].map((item) => (
+            <div key={item.title} className="space-y-2">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl text-[var(--ink)]">
+                {item.title}
+              </h2>
+              <p className="text-[var(--muted)]">{item.body}</p>
+            </div>
+          ))}
+        </section>
       </main>
-    </div>
+    </>
   );
 }
