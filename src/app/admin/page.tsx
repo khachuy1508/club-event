@@ -78,7 +78,7 @@ export default async function AdminPage({ searchParams }: Props) {
 
   return (
     <>
-      <AppHeader user={session.user} links={[{ href: "/admin", label: "Dashboard" }]} />
+      <AppHeader user={session.user} />
       <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
