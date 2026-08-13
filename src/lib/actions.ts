@@ -54,19 +54,20 @@ export async function registerStudentAction(
   });
 
   try {
+    // redirectTo gắn cookie session + chuyển trang trong một nhịp (tránh /qr → login)
     await signIn("credentials", {
       identifier: parsed.data.studentId,
       password: parsed.data.password,
-      redirect: false,
+      redirectTo: "/qr",
     });
   } catch (error) {
     if (error instanceof AuthError) {
-      return { ok: false, message: "Đăng ký thành công nhưng đăng nhập thất bại" };
+      return { ok: false, message: "Đăng ký thành công nhưng đăng nhập thất bại. Hãy đăng nhập lại." };
     }
     throw error;
   }
 
-  redirect("/qr");
+  return { ok: true, message: "Đăng ký thành công" };
 }
 
 export async function loginAction(
@@ -75,19 +76,7 @@ export async function loginAction(
 ): Promise<ActionResult> {
   const identifier = String(formData.get("identifier") ?? "");
   const password = String(formData.get("password") ?? "");
-
-  try {
-    await signIn("credentials", {
-      identifier,
-      password,
-      redirect: false,
-    });
-  } catch (error) {
-    if (error instanceof AuthError) {
-      return { ok: false, message: "Sai tài khoản hoặc mật khẩu" };
-    }
-    throw error;
-  }
+  const callbackUrl = String(formData.get("callbackUrl") ?? "");
 
   const user = await prisma.user.findFirst({
     where: {
@@ -99,13 +88,35 @@ export async function loginAction(
     },
   });
 
-  redirect(
+  const roleHome =
     user?.role === "ADMIN"
       ? "/admin"
       : user?.role === "CLUB_STAFF"
         ? "/scan"
-        : "/qr",
-  );
+        : "/qr";
+
+  const safeCallback =
+    callbackUrl.startsWith("/") && !callbackUrl.startsWith("//")
+      ? callbackUrl
+      : null;
+
+  const redirectTo =
+    user?.role === "STUDENT" && safeCallback ? safeCallback : roleHome;
+
+  try {
+    await signIn("credentials", {
+      identifier,
+      password,
+      redirectTo,
+    });
+  } catch (error) {
+    if (error instanceof AuthError) {
+      return { ok: false, message: "Sai tài khoản hoặc mật khẩu" };
+    }
+    throw error;
+  }
+
+  return { ok: true, message: "Đăng nhập thành công" };
 }
 
 export async function logoutAction() {

@@ -6,11 +6,21 @@ import { homeForRole } from "@/lib/session";
 import { ActionForm } from "@/components/action-form";
 import { AppHeader } from "@/components/app-header";
 
-export default async function LoginPage() {
+type Props = {
+  searchParams: Promise<{ callbackUrl?: string }>;
+};
+
+export default async function LoginPage({ searchParams }: Props) {
   const session = await auth();
   if (session?.user) {
     redirect(homeForRole(session.user.role));
   }
+
+  const params = await searchParams;
+  const callbackUrl =
+    params.callbackUrl?.startsWith("/") && !params.callbackUrl.startsWith("//")
+      ? params.callbackUrl
+      : "";
 
   return (
     <>
@@ -23,6 +33,9 @@ export default async function LoginPage() {
           Sinh viên dùng MSSV. Staff/Admin dùng username được cấp.
         </p>
         <ActionForm action={loginAction} className="mt-8 space-y-4">
+          {callbackUrl ? (
+            <input type="hidden" name="callbackUrl" value={callbackUrl} />
+          ) : null}
           <label className="block space-y-1 text-sm">
             <span>MSSV / Username</span>
             <input
