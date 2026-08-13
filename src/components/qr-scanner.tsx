@@ -4,19 +4,28 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 
 type Props = {
+  active: boolean;
   onScan: (token: string) => void;
+  onStop?: () => void;
 };
 
-export function QrScanner({ onScan }: Props) {
+export function QrScanner({ active, onScan, onStop }: Props) {
   const regionId = useId().replace(/:/g, "");
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const lastRef = useRef<string>("");
+  const handlingRef = useRef(false);
+  const onScanRef = useRef(onScan);
+  const onStopRef = useRef(onStop);
+  onScanRef.current = onScan;
+  onStopRef.current = onStop;
 
   const stop = useCallback(async () => {
     const scanner = scannerRef.current;
-    if (!scanner) return;
+    if (!scanner) {
+      setRunning(false);
+      return;
+    }
     try {
       if (scanner.isScanning) {
         await scanner.stop();
@@ -30,6 +39,7 @@ export function QrScanner({ onScan }: Props) {
   }, []);
 
   const start = useCallback(async () => {
+    handlingRef.current = false;
     setError(null);
     await stop();
     try {
@@ -39,13 +49,13 @@ export function QrScanner({ onScan }: Props) {
         { facingMode: "environment" },
         { fps: 8, qrbox: { width: 240, height: 240 } },
         (decoded) => {
-          if (decoded && decoded !== lastRef.current) {
-            lastRef.current = decoded;
-            onScan(decoded);
-            window.setTimeout(() => {
-              lastRef.current = "";
-            }, 2500);
-          }
+          if (!decoded || handlingRef.current) return;
+          handlingRef.current = true;
+          void (async () => {
+            await stop();
+            onStopRef.current?.();
+            onScanRef.current(decoded);
+          })();
         },
         () => undefined,
       );
@@ -55,37 +65,32 @@ export function QrScanner({ onScan }: Props) {
         "Không mở được camera. Cần HTTPS (hoặc localhost), cấp quyền camera, hoặc dùng nhập MSSV bên dưới.",
       );
       setRunning(false);
+      onStopRef.current?.();
     }
-  }, [onScan, regionId, stop]);
+  }, [regionId, stop]);
 
   useEffect(() => {
-    void start();
+    if (active) {
+      void start();
+    } else {
+      void stop();
+    }
     return () => {
       void stop();
     };
-  }, [start, stop]);
+  }, [active, start, stop]);
 
   return (
     <div className="space-y-3">
       <div
         id={regionId}
-        className="overflow-hidden rounded-xl border border-[var(--line)] bg-black/90 min-h-[260px]"
-      />
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => void start()}
-          className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-white"
-        >
-          {running ? "Khởi động lại camera" : "Bật camera"}
-        </button>
-        <button
-          type="button"
-          onClick={() => void stop()}
-          className="rounded-md border border-[var(--line)] px-3 py-2 text-sm"
-        >
-          Tắt
-        </button>
+        className="relative overflow-hidden rounded-xl border border-[var(--line)] bg-black/90 min-h-[260px]"
+      >
+        {!running ? (
+          <div className="absolute inset-0 flex items-center justify-center px-4 text-center text-sm text-white/70">
+            Camera đang tắt. Bấm &quot;Bật camera&quot; để quét.
+          </div>
+        ) : null}
       </div>
       {error ? <p className="text-sm text-rose-700">{error}</p> : null}
     </div>
