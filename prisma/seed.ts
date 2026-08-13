@@ -1,21 +1,19 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient, Role } from "../src/generated/prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
-import { Pool } from "pg";
+import { PrismaNeon } from "@prisma/adapter-neon";
+import { neonConfig } from "@neondatabase/serverless";
+import ws from "ws";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
-const pool = new Pool({
-  connectionString,
-  ssl: connectionString.includes("sslmode=require")
-    ? { rejectUnauthorized: false }
-    : undefined,
+neonConfig.webSocketConstructor = ws;
+const prisma = new PrismaClient({
+  adapter: new PrismaNeon({ connectionString }),
 });
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const clubs = [
   "Music Club",
@@ -101,5 +99,4 @@ main()
   })
   .finally(async () => {
     await prisma.$disconnect();
-    await pool.end();
   });
