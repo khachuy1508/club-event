@@ -1,6 +1,7 @@
 import { Role } from "@/generated/prisma/client";
 import { AppHeader } from "@/components/app-header";
 import { ActionForm } from "@/components/action-form";
+import { AdminStudentsPanel } from "@/components/admin-students-panel";
 import { AdminTabNav } from "@/components/admin-tab-nav";
 import { ToggleClubButton } from "@/components/toggle-club-button";
 import {
@@ -308,50 +309,20 @@ export default async function AdminPage({ searchParams }: Props) {
           ) : null}
 
           {tab === "students" ? (
-            <section className="space-y-4">
-              <h2 className="font-[family-name:var(--font-display)] text-2xl">
-                Danh sách sinh viên
-              </h2>
-              <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="border-b border-[var(--line)] bg-[var(--wash)] text-[var(--muted)]">
-                    <tr>
-                      <th className="px-3 py-2 font-medium">MSSV</th>
-                      <th className="px-3 py-2 font-medium">Họ tên</th>
-                      <th className="px-3 py-2 font-medium">Clubs đã đến</th>
-                      <th className="px-3 py-2 font-medium">Vote</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((student) => (
-                      <tr
-                        key={student.id}
-                        className="border-b border-[var(--line)] last:border-0 align-top"
-                      >
-                        <td className="px-3 py-3 font-medium">{student.studentId}</td>
-                        <td className="px-3 py-3">{student.name}</td>
-                        <td className="px-3 py-3">
-                          {student.checkIns.length === 0 ? (
-                            <span className="text-[var(--muted)]">—</span>
-                          ) : (
-                            <ul className="space-y-1">
-                              {student.checkIns.map((c) => (
-                                <li key={c.id}>{c.club.name}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </td>
-                        <td className="px-3 py-3">
-                          {student.vote?.club.name ?? (
-                            <span className="text-[var(--muted)]">Chưa vote</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <AdminStudentsPanel
+              students={students.map((student) => ({
+                id: student.id,
+                studentId: student.studentId ?? "",
+                name: student.name,
+                checkIns: student.checkIns.map((item) => ({
+                  id: item.id,
+                  clubName: item.club.name,
+                  createdAt: item.createdAt.toISOString(),
+                })),
+                voteClubName: student.vote?.club.name ?? null,
+                voteAt: student.vote?.createdAt.toISOString() ?? null,
+              }))}
+            />
           ) : null}
         </div>
       </main>
