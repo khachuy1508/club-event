@@ -274,9 +274,19 @@ export async function createClubAction(
     slug = `${slug}-${Date.now().toString().slice(-4)}`;
   }
 
-  await prisma.club.create({
-    data: { name, slug, isActive: true },
-  });
+  try {
+    await prisma.club.create({
+      data: { name, slug, isActive: true },
+    });
+  } catch (error) {
+    console.error("createClubAction failed", error);
+    const detail =
+      error instanceof Error ? error.message : "Unknown database error";
+    return {
+      ok: false,
+      message: `Không tạo được club: ${detail}. Nếu thấy SQLITE_READONLY: dừng next dev, chạy \`rm -rf .next\` rồi \`npm run dev\` lại.`,
+    };
+  }
 
   revalidatePath("/admin");
   return { ok: true, message: `Đã tạo club ${name}` };

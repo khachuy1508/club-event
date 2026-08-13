@@ -1,18 +1,31 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
 import { PrismaClient, Role } from "../src/generated/prisma/client";
-import { PrismaNeon } from "@prisma/adapter-neon";
-import { neonConfig } from "@neondatabase/serverless";
-import ws from "ws";
+import { PrismaNeonHttp } from "@prisma/adapter-neon";
 
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) {
+const raw = process.env.DATABASE_URL;
+if (!raw) {
   throw new Error("DATABASE_URL is not set");
 }
 
-neonConfig.webSocketConstructor = ws;
+function sanitizeDatabaseUrl(url: string) {
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.delete("channel_binding");
+    if (!parsed.searchParams.has("sslmode")) {
+      parsed.searchParams.set("sslmode", "require");
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+}
+
 const prisma = new PrismaClient({
-  adapter: new PrismaNeon({ connectionString }),
+  adapter: new PrismaNeonHttp(sanitizeDatabaseUrl(raw), {
+    arrayMode: false,
+    fullResults: true,
+  }),
 });
 
 const clubs = [
