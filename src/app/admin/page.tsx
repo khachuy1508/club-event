@@ -3,6 +3,10 @@ import { AppHeader } from "@/components/app-header";
 import { ActionForm } from "@/components/action-form";
 import { AdminStudentsPanel } from "@/components/admin-students-panel";
 import { AdminTabNav } from "@/components/admin-tab-nav";
+import {
+  BestClubPodium,
+  buildBestClubPodium,
+} from "@/components/best-club-podium";
 import { ToggleClubButton } from "@/components/toggle-club-button";
 import {
   createClubAction,
@@ -66,6 +70,12 @@ export default async function AdminPage({ searchParams }: Props) {
 
   const totalCheckIns = clubs.reduce((sum, c) => sum + c._count.checkIns, 0);
   const totalVotes = leaderboard.reduce((s, x) => s + x.votes, 0);
+  const podium = buildBestClubPodium(
+    leaderboard,
+    [...clubs]
+      .map((c) => ({ id: c.id, name: c.name }))
+      .sort((a, b) => a.name.localeCompare(b.name, "vi")),
+  );
 
   return (
     <>
@@ -98,29 +108,10 @@ export default async function AdminPage({ searchParams }: Props) {
 
         <div className="min-h-[320px]">
           {tab === "best" ? (
-            <section className="space-y-4">
-              <h2 className="font-[family-name:var(--font-display)] text-2xl">
-                BXH Best Club
-              </h2>
-              {leaderboard.length === 0 ? (
-                <p className="text-sm text-[var(--muted)]">Chưa có vote.</p>
-              ) : (
-                <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
-                  {leaderboard.map((item, index) => (
-                    <li
-                      key={item.clubId}
-                      className="flex items-center justify-between py-3"
-                    >
-                      <span>
-                        <span className="mr-3 text-[var(--muted)]">#{index + 1}</span>
-                        {item.name}
-                      </span>
-                      <strong>{item.votes} vote</strong>
-                    </li>
-                  ))}
-                </ol>
-              )}
-            </section>
+            <BestClubPodium
+              entries={podium.entries}
+              isPlaceholder={podium.isPlaceholder}
+            />
           ) : null}
 
           {tab === "clubs" ? (
