@@ -152,10 +152,14 @@ export default async function AdminPage({ searchParams }: Props) {
                         <td className="px-3 py-3">{club._count.checkIns}</td>
                         <td className="px-3 py-3">{club._count.votes}</td>
                         <td className="px-3 py-3">
-                          {club.staff ? (
-                            <span>{club.staff.user.studentId}</span>
-                          ) : (
+                          {club.staff.length === 0 ? (
                             <span className="text-[var(--muted)]">Chưa có</span>
+                          ) : (
+                            <ul className="space-y-0.5">
+                              {club.staff.map((s) => (
+                                <li key={s.id}>{s.user.studentId}</li>
+                              ))}
+                            </ul>
                           )}
                         </td>
                         <td className="px-3 py-3">
@@ -187,6 +191,9 @@ export default async function AdminPage({ searchParams }: Props) {
                 <h2 className="font-[family-name:var(--font-display)] text-2xl">
                   Tạo staff cho club
                 </h2>
+                <p className="text-sm text-[var(--muted)]">
+                  Một club có thể có nhiều staff. Username không chứa khoảng trắng.
+                </p>
                 <ActionForm action={createStaffAction} className="space-y-3">
                   <select
                     name="clubId"
@@ -195,15 +202,14 @@ export default async function AdminPage({ searchParams }: Props) {
                     defaultValue=""
                   >
                     <option value="" disabled>
-                      Chọn club chưa có staff
+                      Chọn club
                     </option>
-                    {clubs
-                      .filter((c) => !c.staff)
-                      .map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
+                    {clubs.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.name}
+                        {c.staff.length > 0 ? ` (${c.staff.length} staff)` : ""}
+                      </option>
+                    ))}
                   </select>
                   <input
                     name="username"
@@ -221,6 +227,14 @@ export default async function AdminPage({ searchParams }: Props) {
                     name="password"
                     type="password"
                     placeholder="Mật khẩu"
+                    required
+                    minLength={6}
+                    className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Nhập lại mật khẩu"
                     required
                     minLength={6}
                     className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
@@ -248,18 +262,26 @@ export default async function AdminPage({ searchParams }: Props) {
                     <option value="" disabled>
                       Chọn staff
                     </option>
-                    {clubs
-                      .filter((c) => c.staff)
-                      .map((c) => (
-                        <option key={c.staff!.userId} value={c.staff!.userId}>
-                          {c.staff!.user.studentId} — {c.name}
+                    {clubs.flatMap((c) =>
+                      c.staff.map((s) => (
+                        <option key={s.userId} value={s.userId}>
+                          {s.user.studentId} — {c.name}
                         </option>
-                      ))}
+                      )),
+                    )}
                   </select>
                   <input
                     name="password"
                     type="password"
                     placeholder="Mật khẩu mới"
+                    required
+                    minLength={6}
+                    className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="Nhập lại mật khẩu mới"
                     required
                     minLength={6}
                     className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"

@@ -36,7 +36,7 @@ model Club {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  staff    ClubStaff?
+  staff    ClubStaff[]
   checkIns CheckIn[]
   votes    Vote[]
 }
@@ -44,10 +44,12 @@ model Club {
 model ClubStaff {
   id     String @id @default(cuid())
   userId String @unique
-  clubId String @unique
+  clubId String
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   club Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+
+  @@index([clubId])
 }
 
 model CheckIn {

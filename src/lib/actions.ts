@@ -11,7 +11,9 @@ import { requireSession } from "@/lib/session";
 import {
   MAX_CLUBS,
   MIN_CHECKINS_TO_VOTE,
+  createStaffSchema,
   registerSchema,
+  resetStaffPasswordSchema,
   slugify,
   studentIdSchema,
 } from "@/lib/validators";
@@ -30,6 +32,7 @@ export async function registerStudentAction(
     studentId: formData.get("studentId"),
     name: formData.get("name"),
     password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
   });
 
   if (!parsed.success) {
@@ -315,23 +318,27 @@ export async function createStaffAction(
 ): Promise<ActionResult> {
   await requireSession([Role.ADMIN]);
 
-  const clubId = String(formData.get("clubId") ?? "");
-  const username = String(formData.get("username") ?? "").trim().toLowerCase();
-  const name = String(formData.get("name") ?? "").trim();
-  const password = String(formData.get("password") ?? "");
+  const parsed = createStaffSchema.safeParse({
+    clubId: formData.get("clubId"),
+    username: formData.get("username"),
+    name: formData.get("name"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
 
-  if (!clubId || !username || name.length < 2 || password.length < 6) {
-    return { ok: false, message: "Điền đủ thông tin staff (mật khẩu ≥ 6)" };
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ",
+    };
   }
+
+  const { clubId, username, name, password } = parsed.data;
 
   const club = await prisma.club.findUnique({
     where: { id: clubId },
-    include: { staff: true },
   });
   if (!club) return { ok: false, message: "Club không tồn tại" };
-  if (club.staff) {
-    return { ok: false, message: "Club đã có staff — reset mật khẩu thay vì tạo mới" };
-  }
 
   const taken = await prisma.user.findUnique({ where: { studentId: username } });
   if (taken) return { ok: false, message: "Username đã tồn tại" };
@@ -360,11 +367,20 @@ export async function resetStaffPasswordAction(
 ): Promise<ActionResult> {
   await requireSession([Role.ADMIN]);
 
-  const userId = String(formData.get("userId") ?? "");
-  const password = String(formData.get("password") ?? "");
-  if (!userId || password.length < 6) {
-    return { ok: false, message: "Mật khẩu mới tối thiểu 6 ký tự" };
+  const parsed = resetStaffPasswordSchema.safeParse({
+    userId: formData.get("userId"),
+    password: formData.get("password"),
+    confirmPassword: formData.get("confirmPassword"),
+  });
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ",
+    };
   }
+
+  const { userId, password } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || user.role !== Role.CLUB_STAFF) {

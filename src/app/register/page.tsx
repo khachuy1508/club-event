@@ -53,6 +53,17 @@ export default async function RegisterPage() {
               autoComplete="new-password"
             />
           </label>
+          <label className="block space-y-1 text-sm">
+            <span>Nhập lại mật khẩu</span>
+            <input
+              name="confirmPassword"
+              type="password"
+              required
+              minLength={6}
+              className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2"
+              autoComplete="new-password"
+            />
+          </label>
           <button
             type="submit"
             className="w-full rounded-md bg-[var(--accent)] px-4 py-2.5 font-medium text-white hover:bg-[var(--accent-strong)]"
