@@ -16,7 +16,6 @@ import {
 import { parseAdminTab } from "@/lib/admin-tabs";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { MAX_CLUBS } from "@/lib/validators";
 import Link from "next/link";
 
 type Props = {
