@@ -1,15 +1,7 @@
 "use client";
 
 import Link from "next/link";
-
-const TABS = [
-  { id: "best", label: "Best Club" },
-  { id: "clubs", label: "Clubs" },
-  { id: "staff", label: "Tạo staff" },
-  { id: "students", label: "Sinh viên" },
-] as const;
-
-export type AdminTabId = (typeof TABS)[number]["id"];
+import { ADMIN_TABS, type AdminTabId } from "@/lib/admin-tabs";
 
 export function AdminTabNav({ active }: { active: AdminTabId }) {
   return (
@@ -17,7 +9,7 @@ export function AdminTabNav({ active }: { active: AdminTabId }) {
       className="-mx-1 flex gap-1 overflow-x-auto border-b border-[var(--line)] pb-px"
       aria-label="Admin sections"
     >
-      {TABS.map((tab) => {
+      {ADMIN_TABS.map((tab) => {
         const isActive = tab.id === active;
         return (
           <Link
@@ -36,11 +28,4 @@ export function AdminTabNav({ active }: { active: AdminTabId }) {
       })}
     </nav>
   );
-}
-
-export function parseAdminTab(value: string | undefined): AdminTabId {
-  if (value === "clubs" || value === "staff" || value === "students" || value === "best") {
-    return value;
-  }
-  return "best";
 }

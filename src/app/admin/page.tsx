@@ -1,13 +1,14 @@
 import { Role } from "@/generated/prisma/client";
 import { AppHeader } from "@/components/app-header";
 import { ActionForm } from "@/components/action-form";
-import { AdminTabNav, parseAdminTab } from "@/components/admin-tab-nav";
+import { AdminTabNav } from "@/components/admin-tab-nav";
 import { ToggleClubButton } from "@/components/toggle-club-button";
 import {
   createClubAction,
   createStaffAction,
   resetStaffPasswordAction,
 } from "@/lib/actions";
+import { parseAdminTab } from "@/lib/admin-tabs";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { MAX_CLUBS } from "@/lib/validators";
