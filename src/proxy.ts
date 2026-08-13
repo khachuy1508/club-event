@@ -18,9 +18,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // On HTTPS (Vercel), Auth.js cookie is `__Secure-authjs.session-token`.
+  // Without secureCookie: true, getToken looks for the wrong name → endless /login?callbackUrl=/qr
   const token = await getToken({
     req: request,
     secret: process.env.AUTH_SECRET,
+    secureCookie: request.nextUrl.protocol === "https:",
   });
 
   if (!token) {
