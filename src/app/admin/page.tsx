@@ -1,6 +1,7 @@
 import { Role } from "@/generated/prisma/client";
 import { AppHeader } from "@/components/app-header";
 import { ActionForm } from "@/components/action-form";
+import { AdminTabNav, parseAdminTab } from "@/components/admin-tab-nav";
 import { ToggleClubButton } from "@/components/toggle-club-button";
 import {
   createClubAction,
@@ -12,8 +13,14 @@ import { requireSession } from "@/lib/session";
 import { MAX_CLUBS } from "@/lib/validators";
 import Link from "next/link";
 
-export default async function AdminPage() {
+type Props = {
+  searchParams: Promise<{ tab?: string }>;
+};
+
+export default async function AdminPage({ searchParams }: Props) {
   const session = await requireSession([Role.ADMIN]);
+  const params = await searchParams;
+  const tab = parseAdminTab(params.tab);
 
   const [students, clubs, voteGroups] = await Promise.all([
     prisma.user.findMany({
@@ -45,10 +52,13 @@ export default async function AdminPage() {
     votes: g._count.clubId,
   }));
 
+  const totalCheckIns = clubs.reduce((sum, c) => sum + c._count.checkIns, 0);
+  const totalVotes = leaderboard.reduce((s, x) => s + x.votes, 0);
+
   return (
     <>
       <AppHeader user={session.user} links={[{ href: "/admin", label: "Dashboard" }]} />
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-12 px-4 py-10">
+      <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-10">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">
@@ -66,226 +76,251 @@ export default async function AdminPage() {
           </Link>
         </div>
 
-        <section className="grid gap-4 sm:grid-cols-3">
+        <section className="grid gap-3 sm:grid-cols-3">
           <Stat label="Sinh viên" value={students.length} />
-          <Stat
-            label="Tổng check-in"
-            value={clubs.reduce((sum, c) => sum + c._count.checkIns, 0)}
-          />
-          <Stat label="Tổng vote" value={leaderboard.reduce((s, x) => s + x.votes, 0)} />
+          <Stat label="Tổng check-in" value={totalCheckIns} />
+          <Stat label="Tổng vote" value={totalVotes} />
         </section>
 
-        <section className="space-y-4">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl">
-            BXH Best Club
-          </h2>
-          {leaderboard.length === 0 ? (
-            <p className="text-sm text-[var(--muted)]">Chưa có vote.</p>
-          ) : (
-            <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
-              {leaderboard.map((item, index) => (
-                <li key={item.clubId} className="flex items-center justify-between py-3">
-                  <span>
-                    <span className="mr-3 text-[var(--muted)]">#{index + 1}</span>
-                    {item.name}
-                  </span>
-                  <strong>{item.votes} vote</strong>
-                </li>
-              ))}
-            </ol>
-          )}
-        </section>
+        <AdminTabNav active={tab} />
 
-        <section className="space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="font-[family-name:var(--font-display)] text-2xl">Clubs</h2>
-            <ActionForm action={createClubAction} className="flex flex-wrap gap-2">
-              <input
-                name="name"
-                placeholder="Tên club mới"
-                required
-                className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-              />
-              <button
-                type="submit"
-                className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-white"
-              >
-                Thêm club
-              </button>
-            </ActionForm>
-          </div>
-          <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-[var(--line)] bg-[var(--wash)] text-[var(--muted)]">
-                <tr>
-                  <th className="px-3 py-2 font-medium">Club</th>
-                  <th className="px-3 py-2 font-medium">Check-ins</th>
-                  <th className="px-3 py-2 font-medium">Votes</th>
-                  <th className="px-3 py-2 font-medium">Staff</th>
-                  <th className="px-3 py-2 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {clubs.map((club) => (
-                  <tr key={club.id} className="border-b border-[var(--line)] last:border-0">
-                    <td className="px-3 py-3 font-medium">{club.name}</td>
-                    <td className="px-3 py-3">{club._count.checkIns}</td>
-                    <td className="px-3 py-3">{club._count.votes}</td>
-                    <td className="px-3 py-3">
-                      {club.staff ? (
-                        <span>{club.staff.user.studentId}</span>
-                      ) : (
-                        <span className="text-[var(--muted)]">Chưa có</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      <div className="flex items-center gap-2">
-                        <span className={club.isActive ? "text-emerald-700" : "text-rose-700"}>
-                          {club.isActive ? "Active" : "Hidden"}
-                        </span>
-                        <ToggleClubButton clubId={club.id} isActive={club.isActive} />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section className="grid gap-8 md:grid-cols-2">
-          <div className="space-y-3">
-            <h2 className="font-[family-name:var(--font-display)] text-2xl">
-              Tạo staff cho club
-            </h2>
-            <ActionForm action={createStaffAction} className="space-y-3">
-              <select
-                name="clubId"
-                required
-                className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Chọn club chưa có staff
-                </option>
-                {clubs
-                  .filter((c) => !c.staff)
-                  .map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
+        <div className="min-h-[320px]">
+          {tab === "best" ? (
+            <section className="space-y-4">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl">
+                BXH Best Club
+              </h2>
+              {leaderboard.length === 0 ? (
+                <p className="text-sm text-[var(--muted)]">Chưa có vote.</p>
+              ) : (
+                <ol className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+                  {leaderboard.map((item, index) => (
+                    <li
+                      key={item.clubId}
+                      className="flex items-center justify-between py-3"
+                    >
+                      <span>
+                        <span className="mr-3 text-[var(--muted)]">#{index + 1}</span>
+                        {item.name}
+                      </span>
+                      <strong>{item.votes} vote</strong>
+                    </li>
                   ))}
-              </select>
-              <input
-                name="username"
-                placeholder="Username (vd: staff7)"
-                required
-                className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-              />
-              <input
-                name="name"
-                placeholder="Tên hiển thị"
-                required
-                className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-              />
-              <input
-                name="password"
-                type="password"
-                placeholder="Mật khẩu"
-                required
-                minLength={6}
-                className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-              />
-              <button
-                type="submit"
-                className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-white"
-              >
-                Tạo staff
-              </button>
-            </ActionForm>
-          </div>
+                </ol>
+              )}
+            </section>
+          ) : null}
 
-          <div className="space-y-3">
-            <h2 className="font-[family-name:var(--font-display)] text-2xl">
-              Reset mật khẩu staff
-            </h2>
-            <ActionForm action={resetStaffPasswordAction} className="space-y-3">
-              <select
-                name="userId"
-                required
-                className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-                defaultValue=""
-              >
-                <option value="" disabled>
-                  Chọn staff
-                </option>
-                {clubs
-                  .filter((c) => c.staff)
-                  .map((c) => (
-                    <option key={c.staff!.userId} value={c.staff!.userId}>
-                      {c.staff!.user.studentId} — {c.name}
+          {tab === "clubs" ? (
+            <section className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h2 className="font-[family-name:var(--font-display)] text-2xl">Clubs</h2>
+                <ActionForm action={createClubAction} className="flex flex-wrap gap-2">
+                  <input
+                    name="name"
+                    placeholder="Tên club mới"
+                    required
+                    className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-white"
+                  >
+                    Thêm club
+                  </button>
+                </ActionForm>
+              </div>
+              <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b border-[var(--line)] bg-[var(--wash)] text-[var(--muted)]">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">Club</th>
+                      <th className="px-3 py-2 font-medium">Check-ins</th>
+                      <th className="px-3 py-2 font-medium">Votes</th>
+                      <th className="px-3 py-2 font-medium">Staff</th>
+                      <th className="px-3 py-2 font-medium">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clubs.map((club) => (
+                      <tr
+                        key={club.id}
+                        className="border-b border-[var(--line)] last:border-0"
+                      >
+                        <td className="px-3 py-3 font-medium">{club.name}</td>
+                        <td className="px-3 py-3">{club._count.checkIns}</td>
+                        <td className="px-3 py-3">{club._count.votes}</td>
+                        <td className="px-3 py-3">
+                          {club.staff ? (
+                            <span>{club.staff.user.studentId}</span>
+                          ) : (
+                            <span className="text-[var(--muted)]">Chưa có</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={
+                                club.isActive ? "text-emerald-700" : "text-rose-700"
+                              }
+                            >
+                              {club.isActive ? "Active" : "Hidden"}
+                            </span>
+                            <ToggleClubButton
+                              clubId={club.id}
+                              isActive={club.isActive}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ) : null}
+
+          {tab === "staff" ? (
+            <section className="grid gap-8 md:grid-cols-2">
+              <div className="space-y-3">
+                <h2 className="font-[family-name:var(--font-display)] text-2xl">
+                  Tạo staff cho club
+                </h2>
+                <ActionForm action={createStaffAction} className="space-y-3">
+                  <select
+                    name="clubId"
+                    required
+                    className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>
+                      Chọn club chưa có staff
                     </option>
-                  ))}
-              </select>
-              <input
-                name="password"
-                type="password"
-                placeholder="Mật khẩu mới"
-                required
-                minLength={6}
-                className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-              />
-              <button
-                type="submit"
-                className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm hover:bg-[var(--wash)]"
-              >
-                Reset
-              </button>
-            </ActionForm>
-          </div>
-        </section>
+                    {clubs
+                      .filter((c) => !c.staff)
+                      .map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                  </select>
+                  <input
+                    name="username"
+                    placeholder="Username (vd: staff7)"
+                    required
+                    className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="name"
+                    placeholder="Tên hiển thị"
+                    required
+                    className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="password"
+                    type="password"
+                    placeholder="Mật khẩu"
+                    required
+                    minLength={6}
+                    className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-white"
+                  >
+                    Tạo staff
+                  </button>
+                </ActionForm>
+              </div>
 
-        <section className="space-y-4">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl">
-            Danh sách sinh viên
-          </h2>
-          <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
-            <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-[var(--line)] bg-[var(--wash)] text-[var(--muted)]">
-                <tr>
-                  <th className="px-3 py-2 font-medium">MSSV</th>
-                  <th className="px-3 py-2 font-medium">Họ tên</th>
-                  <th className="px-3 py-2 font-medium">Clubs đã đến</th>
-                  <th className="px-3 py-2 font-medium">Vote</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((student) => (
-                  <tr key={student.id} className="border-b border-[var(--line)] last:border-0 align-top">
-                    <td className="px-3 py-3 font-medium">{student.studentId}</td>
-                    <td className="px-3 py-3">{student.name}</td>
-                    <td className="px-3 py-3">
-                      {student.checkIns.length === 0 ? (
-                        <span className="text-[var(--muted)]">—</span>
-                      ) : (
-                        <ul className="space-y-1">
-                          {student.checkIns.map((c) => (
-                            <li key={c.id}>{c.club.name}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      {student.vote?.club.name ?? (
-                        <span className="text-[var(--muted)]">Chưa vote</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
+              <div className="space-y-3">
+                <h2 className="font-[family-name:var(--font-display)] text-2xl">
+                  Reset mật khẩu staff
+                </h2>
+                <ActionForm action={resetStaffPasswordAction} className="space-y-3">
+                  <select
+                    name="userId"
+                    required
+                    className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                    defaultValue=""
+                  >
+                    <option value="" disabled>
+                      Chọn staff
+                    </option>
+                    {clubs
+                      .filter((c) => c.staff)
+                      .map((c) => (
+                        <option key={c.staff!.userId} value={c.staff!.userId}>
+                          {c.staff!.user.studentId} — {c.name}
+                        </option>
+                      ))}
+                  </select>
+                  <input
+                    name="password"
+                    type="password"
+                    placeholder="Mật khẩu mới"
+                    required
+                    minLength={6}
+                    className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <button
+                    type="submit"
+                    className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm hover:bg-[var(--wash)]"
+                  >
+                    Reset
+                  </button>
+                </ActionForm>
+              </div>
+            </section>
+          ) : null}
+
+          {tab === "students" ? (
+            <section className="space-y-4">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl">
+                Danh sách sinh viên
+              </h2>
+              <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b border-[var(--line)] bg-[var(--wash)] text-[var(--muted)]">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">MSSV</th>
+                      <th className="px-3 py-2 font-medium">Họ tên</th>
+                      <th className="px-3 py-2 font-medium">Clubs đã đến</th>
+                      <th className="px-3 py-2 font-medium">Vote</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {students.map((student) => (
+                      <tr
+                        key={student.id}
+                        className="border-b border-[var(--line)] last:border-0 align-top"
+                      >
+                        <td className="px-3 py-3 font-medium">{student.studentId}</td>
+                        <td className="px-3 py-3">{student.name}</td>
+                        <td className="px-3 py-3">
+                          {student.checkIns.length === 0 ? (
+                            <span className="text-[var(--muted)]">—</span>
+                          ) : (
+                            <ul className="space-y-1">
+                              {student.checkIns.map((c) => (
+                                <li key={c.id}>{c.club.name}</li>
+                              ))}
+                            </ul>
+                          )}
+                        </td>
+                        <td className="px-3 py-3">
+                          {student.vote?.club.name ?? (
+                            <span className="text-[var(--muted)]">Chưa vote</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          ) : null}
+        </div>
       </main>
     </>
   );
