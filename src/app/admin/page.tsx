@@ -23,7 +23,7 @@ export default async function AdminPage({ searchParams }: Props) {
   const params = await searchParams;
   const tab = parseAdminTab(params.tab);
 
-  const [students, clubs, voteGroups] = await Promise.all([
+  const [students, clubsRaw, voteGroups] = await Promise.all([
     prisma.user.findMany({
       where: { role: Role.STUDENT },
       orderBy: { createdAt: "desc" },
@@ -45,6 +45,16 @@ export default async function AdminPage({ searchParams }: Props) {
       orderBy: { _count: { clubId: "desc" } },
     }),
   ]);
+
+  // Normalize staff to always be an array (avoids HMR/stale client returning a single object)
+  const clubs = clubsRaw.map((club) => ({
+    ...club,
+    staff: Array.isArray(club.staff)
+      ? club.staff
+      : club.staff
+        ? [club.staff]
+        : [],
+  }));
 
   const clubNameById = Object.fromEntries(clubs.map((c) => [c.id, c.name]));
   const leaderboard = voteGroups.map((g) => ({
