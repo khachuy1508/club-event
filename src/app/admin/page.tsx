@@ -86,9 +86,6 @@ export default async function AdminPage({ searchParams }: Props) {
             <h1 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">
               Admin dashboard
             </h1>
-            <p className="mt-2 text-sm text-[var(--muted)]">
-              {students.length} sinh viên · {clubs.length}/{MAX_CLUBS} clubs
-            </p>
           </div>
           <Link
             href="/api/admin/export"
@@ -99,8 +96,8 @@ export default async function AdminPage({ searchParams }: Props) {
         </div>
 
         <section className="grid gap-3 sm:grid-cols-3">
-          <Stat label="Sinh viên" value={students.length} />
-          <Stat label="Tổng check-in" value={totalCheckIns} />
+          <Stat label="Số sinh viên tham gia" value={students.length} />
+          <Stat label="Tổng lượt checkin tại CLUBS" value={totalCheckIns} />
           <Stat label="Tổng vote" value={totalVotes} />
         </section>
 
