@@ -356,13 +356,6 @@ export async function submitOpinionAction(
     return { ok: false, message: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
   }
 
-  const existing = await prisma.opinion.findUnique({
-    where: { studentId: session.user.id },
-  });
-  if (existing) {
-    return { ok: false, message: "Bạn đã gửi ý kiến rồi" };
-  }
-
   await prisma.opinion.create({
     data: {
       studentId: session.user.id,

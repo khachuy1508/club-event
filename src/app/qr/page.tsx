@@ -17,7 +17,7 @@ export default async function QrPage() {
   const session = await requireSession([Role.STUDENT]);
   const studentId = session.user.studentId ?? "";
 
-  const [student, clubs, checkIns, vote, opinion, token] = await Promise.all([
+  const [student, clubs, checkIns, vote, token] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: { name: true, major: true },
@@ -41,9 +41,6 @@ export default async function QrPage() {
       where: { studentId: session.user.id },
       include: { club: true },
     }),
-    prisma.opinion.findUnique({
-      where: { studentId: session.user.id },
-    }),
     createStudentQrToken({
       sub: session.user.id,
       studentId,
@@ -55,12 +52,13 @@ export default async function QrPage() {
 
   return (
     <div className="relative isolate min-h-dvh overflow-x-hidden bg-[#1a3f8a]">
-      <div className="pointer-events-none absolute inset-0 z-0 flex flex-col">
+      <div className="pointer-events-none absolute inset-0 z-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/club.jpg" alt="" className="w-full shrink-0 select-none" />
-        <div className="relative min-h-[40vh] flex-1 bg-gradient-to-b from-[#4ea6de] via-[#2d6cb3] to-[#152a6e]">
-          <div className="absolute inset-x-0 -top-24 h-24 bg-gradient-to-b from-transparent to-[#4ea6de]" />
-        </div>
+        <img
+          src="/club.jpg"
+          alt=""
+          className="h-full w-full object-cover object-top select-none"
+        />
       </div>
       <div className="relative z-10 flex min-h-dvh flex-col">
         <main className="mx-auto flex w-full max-w-lg min-w-0 flex-1 flex-col gap-3 px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[22vw] sm:max-w-5xl sm:gap-6 sm:px-4 sm:pt-[12rem]">
@@ -87,7 +85,6 @@ export default async function QrPage() {
                 name: item.club.name,
               }))}
               votedClubName={vote?.club.name ?? null}
-              existingOpinion={opinion?.body ?? null}
             />
           </PassportFrame>
 

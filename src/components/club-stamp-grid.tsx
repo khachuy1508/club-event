@@ -15,14 +15,12 @@ type Props = {
   clubs: ClubStamp[];
   checkedInClubs: VoteClub[];
   votedClubName: string | null;
-  existingOpinion: string | null;
 };
 
 export function ClubPassportBoard({
   clubs,
   checkedInClubs,
   votedClubName,
-  existingOpinion,
 }: Props) {
   return (
     <section className="min-w-0 rounded-[1.2rem] border border-white/70 bg-white/85 p-2.5 backdrop-blur-md sm:rounded-[1.6rem] sm:p-6">
@@ -54,7 +52,7 @@ export function ClubPassportBoard({
           votedClubName={votedClubName}
           embedded
         />
-        <PassportOpinionCard existingBody={existingOpinion} embedded />
+        <PassportOpinionCard embedded />
       </div>
     </section>
   );
