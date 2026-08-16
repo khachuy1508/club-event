@@ -17,21 +17,29 @@ model User {
   id           String   @id @default(cuid())
   studentId    String?  @unique
   name         String
+  major        String?
   passwordHash String
   role         Role     @default(STUDENT)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  clubStaff    ClubStaff?
-  checkIns     CheckIn[] @relation("StudentCheckIns")
-  checkedInBy  CheckIn[] @relation("StaffCheckIns")
-  vote         Vote?
+  clubStaff   ClubStaff?
+  checkIns    CheckIn[]  @relation("StudentCheckIns")
+  checkedInBy CheckIn[]  @relation("StaffCheckIns")
+  vote        Vote?
+  opinion     Opinion?
 }
 
 model Club {
   id        String   @id @default(cuid())
   name      String
+  nameVi    String
+  nameEn    String
+  code      String?
   slug      String   @unique
+  sortOrder Int      @default(0)
+  logoMime  String?
+  logoBytes Bytes?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -59,8 +67,8 @@ model CheckIn {
   checkedInById String
   createdAt     DateTime @default(now())
 
-  student   User @relation("StudentCheckIns", fields: [studentId], references: [id], onDelete: Cascade)
-  club      Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  student     User @relation("StudentCheckIns", fields: [studentId], references: [id], onDelete: Cascade)
+  club        Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
   checkedInBy User @relation("StaffCheckIns", fields: [checkedInById], references: [id])
 
   @@unique([studentId, clubId])
@@ -78,4 +86,13 @@ model Vote {
   club    Club @relation(fields: [clubId], references: [id], onDelete: Cascade)
 
   @@index([clubId])
+}
+
+model Opinion {
+  id        String   @id @default(cuid())
+  studentId String   @unique
+  body      String
+  createdAt DateTime @default(now())
+
+  student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
 }

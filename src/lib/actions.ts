@@ -8,10 +8,12 @@ import { Role } from "@/generated/prisma/client";
 import { signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
+import { parseClubLogo } from "@/lib/logo";
 import {
   MAX_CLUBS,
   MIN_CHECKINS_TO_VOTE,
   createStaffSchema,
+  opinionSchema,
   registerSchema,
   resetStaffPasswordSchema,
   slugify,
@@ -31,6 +33,7 @@ export async function registerStudentAction(
   const parsed = registerSchema.safeParse({
     studentId: formData.get("studentId"),
     name: formData.get("name"),
+    major: formData.get("major"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
   });
@@ -51,6 +54,7 @@ export async function registerStudentAction(
     data: {
       studentId: parsed.data.studentId,
       name: parsed.data.name,
+      major: parsed.data.major,
       passwordHash,
       role: Role.STUDENT,
     },
@@ -249,8 +253,9 @@ export async function voteAction(
   });
 
   revalidatePath("/vote");
+  revalidatePath("/qr");
   revalidatePath("/admin");
-  redirect("/vote?done=1");
+  redirect("/qr");
 }
 
 export async function createClubAction(
@@ -259,9 +264,13 @@ export async function createClubAction(
 ): Promise<ActionResult> {
   await requireSession([Role.ADMIN]);
 
-  const name = String(formData.get("name") ?? "").trim();
-  if (name.length < 2) {
-    return { ok: false, message: "Tên club tối thiểu 2 ký tự" };
+  const nameEn = String(formData.get("nameEn") ?? formData.get("name") ?? "").trim();
+  const nameVi = String(formData.get("nameVi") ?? nameEn).trim();
+  const codeRaw = String(formData.get("code") ?? "").trim();
+  const code = codeRaw.length > 0 ? codeRaw : null;
+
+  if (nameEn.length < 2) {
+    return { ok: false, message: "Tên club (EN) tối thiểu 2 ký tự" };
   }
 
   const count = await prisma.club.count();
@@ -269,7 +278,10 @@ export async function createClubAction(
     return { ok: false, message: `Tối đa ${MAX_CLUBS} clubs` };
   }
 
-  let slug = slugify(name);
+  const logoResult = await parseClubLogo(formData.get("logo"));
+  if (!logoResult.ok) return logoResult;
+
+  let slug = slugify(nameEn);
   if (!slug) slug = `club-${Date.now()}`;
 
   const exists = await prisma.club.findUnique({ where: { slug } });
@@ -279,7 +291,17 @@ export async function createClubAction(
 
   try {
     await prisma.club.create({
-      data: { name, slug, isActive: true },
+      data: {
+        name: nameEn,
+        nameEn,
+        nameVi,
+        code,
+        slug,
+        sortOrder: count + 1,
+        isActive: true,
+        logoMime: logoResult.logo?.mime,
+        logoBytes: logoResult.logo?.bytes,
+      },
     });
   } catch (error) {
     console.error("createClubAction failed", error);
@@ -287,12 +309,70 @@ export async function createClubAction(
       error instanceof Error ? error.message : "Unknown database error";
     return {
       ok: false,
-      message: `Không tạo được club: ${detail}. Nếu thấy SQLITE_READONLY: dừng next dev, chạy \`rm -rf .next\` rồi \`npm run dev\` lại.`,
+      message: `Không tạo được club: ${detail}.`,
     };
   }
 
   revalidatePath("/admin");
-  return { ok: true, message: `Đã tạo club ${name}` };
+  revalidatePath("/qr");
+  return { ok: true, message: `Đã tạo club ${nameEn}` };
+}
+
+export async function updateClubLogoAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireSession([Role.ADMIN]);
+  const clubId = String(formData.get("clubId") ?? "");
+  if (!clubId) return { ok: false, message: "Thiếu club" };
+
+  const logoResult = await parseClubLogo(formData.get("logo"));
+  if (!logoResult.ok) return logoResult;
+  if (!logoResult.logo) return { ok: false, message: "Chọn file logo" };
+
+  const club = await prisma.club.findUnique({ where: { id: clubId } });
+  if (!club) return { ok: false, message: "Không tìm thấy club" };
+
+  await prisma.club.update({
+    where: { id: clubId },
+    data: {
+      logoMime: logoResult.logo.mime,
+      logoBytes: logoResult.logo.bytes,
+    },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/qr");
+  return { ok: true, message: `Đã cập nhật logo ${club.name}` };
+}
+
+export async function submitOpinionAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const session = await requireSession([Role.STUDENT]);
+  const parsed = opinionSchema.safeParse({ body: formData.get("body") });
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
+  }
+
+  const existing = await prisma.opinion.findUnique({
+    where: { studentId: session.user.id },
+  });
+  if (existing) {
+    return { ok: false, message: "Bạn đã gửi ý kiến rồi" };
+  }
+
+  await prisma.opinion.create({
+    data: {
+      studentId: session.user.id,
+      body: parsed.data.body,
+    },
+  });
+
+  revalidatePath("/qr");
+  revalidatePath("/admin");
+  return { ok: true, message: "Cảm ơn bạn đã gửi ý kiến" };
 }
 
 export async function toggleClubAction(clubId: string): Promise<ActionResult> {
@@ -306,6 +386,7 @@ export async function toggleClubAction(clubId: string): Promise<ActionResult> {
   });
 
   revalidatePath("/admin");
+  revalidatePath("/qr");
   return {
     ok: true,
     message: club.isActive ? "Đã ẩn club" : "Đã kích hoạt club",

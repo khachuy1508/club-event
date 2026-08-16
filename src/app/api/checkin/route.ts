@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { Role } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -70,6 +71,11 @@ export async function POST(request: Request) {
       { status: 409 },
     );
   }
+
+  revalidatePath("/qr");
+  revalidatePath("/history");
+  revalidatePath("/admin");
+  revalidatePath("/vote");
 
   return NextResponse.json({
     ok: true,

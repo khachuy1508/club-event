@@ -7,6 +7,7 @@ type Props = {
   action: (prev: ActionResult | null, formData: FormData) => Promise<ActionResult>;
   children: React.ReactNode;
   className?: string;
+  encType?: string;
 };
 
 function snapshotForm(form: HTMLFormElement) {
@@ -47,7 +48,7 @@ function restoreForm(form: HTMLFormElement, saved: Record<string, string>) {
   }
 }
 
-export function ActionForm({ action, children, className }: Props) {
+export function ActionForm({ action, children, className, encType }: Props) {
   const [state, formAction, pending] = useActionState(action, null);
   const formRef = useRef<HTMLFormElement>(null);
   const savedRef = useRef<Record<string, string>>({});
@@ -68,6 +69,7 @@ export function ActionForm({ action, children, className }: Props) {
     <form
       ref={formRef}
       className={className}
+      encType={encType}
       action={(formData) => {
         if (formRef.current) {
           savedRef.current = snapshotForm(formRef.current);

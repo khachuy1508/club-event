@@ -17,9 +17,8 @@ export default async function HistoryPage() {
       <AppHeader
         user={session.user}
         links={[
-          { href: "/qr", label: "QR" },
+          { href: "/qr", label: "Passport" },
           { href: "/history", label: "Lịch sử" },
-          { href: "/vote", label: "Vote" },
         ]}
       />
       <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-10">

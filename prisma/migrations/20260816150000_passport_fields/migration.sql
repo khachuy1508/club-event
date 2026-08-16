@@ -1,0 +1,27 @@
+ALTER TABLE "User" ADD COLUMN "major" TEXT;
+
+ALTER TABLE "Club" ADD COLUMN "nameVi" TEXT;
+ALTER TABLE "Club" ADD COLUMN "nameEn" TEXT;
+ALTER TABLE "Club" ADD COLUMN "code" TEXT;
+ALTER TABLE "Club" ADD COLUMN "sortOrder" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "Club" ADD COLUMN "logoMime" TEXT;
+ALTER TABLE "Club" ADD COLUMN "logoBytes" BYTEA;
+
+UPDATE "Club" SET "nameEn" = "name" WHERE "nameEn" IS NULL;
+UPDATE "Club" SET "nameVi" = "name" WHERE "nameVi" IS NULL;
+
+ALTER TABLE "Club" ALTER COLUMN "nameEn" SET NOT NULL;
+ALTER TABLE "Club" ALTER COLUMN "nameVi" SET NOT NULL;
+
+CREATE TABLE "Opinion" (
+    "id" TEXT NOT NULL,
+    "studentId" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Opinion_pkey" PRIMARY KEY ("id")
+);
+
+CREATE UNIQUE INDEX "Opinion_studentId_key" ON "Opinion"("studentId");
+
+ALTER TABLE "Opinion" ADD CONSTRAINT "Opinion_studentId_fkey" FOREIGN KEY ("studentId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;

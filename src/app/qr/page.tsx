@@ -1,59 +1,104 @@
 import { Role } from "@/generated/prisma/client";
-import { AppHeader } from "@/components/app-header";
-import { StudentQrCard } from "@/components/student-qr-card";
+import { ClubPassportBoard } from "@/components/club-stamp-grid";
+import { OrbitPassCard } from "@/components/orbit-pass-card";
 import { createStudentQrToken } from "@/lib/qr";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
-import { MIN_CHECKINS_TO_VOTE } from "@/lib/validators";
-import Link from "next/link";
+
+function PassportFrame({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="rounded-[1.25rem] border border-sky-300 p-px sm:rounded-[1.65rem]">
+      {children}
+    </div>
+  );
+}
 
 export default async function QrPage() {
   const session = await requireSession([Role.STUDENT]);
   const studentId = session.user.studentId ?? "";
 
-  const checkInCount = await prisma.checkIn.count({
-    where: { studentId: session.user.id },
-  });
+  const [student, clubs, checkIns, vote, opinion, token] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true, major: true },
+    }),
+    prisma.club.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
+      select: {
+        id: true,
+        nameEn: true,
+        code: true,
+        logoMime: true,
+      },
+    }),
+    prisma.checkIn.findMany({
+      where: { studentId: session.user.id },
+      select: { clubId: true, club: { select: { id: true, name: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.vote.findUnique({
+      where: { studentId: session.user.id },
+      include: { club: true },
+    }),
+    prisma.opinion.findUnique({
+      where: { studentId: session.user.id },
+    }),
+    createStudentQrToken({
+      sub: session.user.id,
+      studentId,
+      name: session.user.name,
+    }),
+  ]);
 
-  const token = await createStudentQrToken({
-    sub: session.user.id,
-    studentId,
-    name: session.user.name,
-  });
-
-  const canVote = checkInCount >= MIN_CHECKINS_TO_VOTE;
+  const checkedInIds = new Set(checkIns.map((item) => item.clubId));
 
   return (
-    <>
-      <AppHeader
-        user={session.user}
-        links={[
-          { href: "/qr", label: "QR" },
-          { href: "/history", label: "Lịch sử" },
-          { href: "/vote", label: "Vote" },
-        ]}
-      />
-      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 py-10">
-        <div className="text-center">
-          <h1 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">
-            QR check-in của bạn
-          </h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            Đã check-in {checkInCount}/{MIN_CHECKINS_TO_VOTE} club để mở vote
+    <div className="relative isolate min-h-dvh overflow-x-hidden bg-[#1a3f8a]">
+      <div className="pointer-events-none absolute inset-0 z-0 flex flex-col">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/club.jpg" alt="" className="w-full shrink-0 select-none" />
+        <div className="relative min-h-[40vh] flex-1 bg-gradient-to-b from-[#4ea6de] via-[#2d6cb3] to-[#152a6e]">
+          <div className="absolute inset-x-0 -top-24 h-24 bg-gradient-to-b from-transparent to-[#4ea6de]" />
+        </div>
+      </div>
+      <div className="relative z-10 flex min-h-dvh flex-col">
+        <main className="mx-auto flex w-full max-w-lg min-w-0 flex-1 flex-col gap-3 px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[22vw] sm:max-w-5xl sm:gap-6 sm:px-4 sm:pt-[12rem]">
+          <PassportFrame>
+            <OrbitPassCard
+              token={token}
+              studentId={studentId}
+              name={student?.name ?? session.user.name}
+              major={student?.major ?? "Chưa cập nhật"}
+            />
+          </PassportFrame>
+
+          <PassportFrame>
+            <ClubPassportBoard
+              clubs={clubs.map((club) => ({
+                id: club.id,
+                nameEn: club.nameEn,
+                code: club.code,
+                hasLogo: Boolean(club.logoMime),
+                checkedIn: checkedInIds.has(club.id),
+              }))}
+              checkedInClubs={checkIns.map((item) => ({
+                id: item.club.id,
+                name: item.club.name,
+              }))}
+              votedClubName={vote?.club.name ?? null}
+              existingOpinion={opinion?.body ?? null}
+            />
+          </PassportFrame>
+
+          <p className="px-2 pb-1 text-center text-[9px] leading-relaxed tracking-wide text-white/90 sm:text-xs sm:tracking-[0.2em]">
+            COLLECT STAMPS – EXPLORE – VOTE – SHARE
+            <span className="mt-0.5 block font-normal tracking-normal text-white/75">
+              Complete your orbit and make your mark at USTH!
+            </span>
           </p>
-        </div>
-        <StudentQrCard token={token} studentId={studentId} name={session.user.name} />
-        <div className="flex justify-center gap-3 text-sm">
-          <Link href="/history" className="text-[var(--accent)] underline-offset-2 hover:underline">
-            Xem lịch sử
-          </Link>
-          {canVote ? (
-            <Link href="/vote" className="font-semibold text-[var(--accent)] underline-offset-2 hover:underline">
-              Vote Best Club
-            </Link>
-          ) : null}
-        </div>
-      </main>
-    </>
+        </main>
+      </div>
+    </div>
   );
 }

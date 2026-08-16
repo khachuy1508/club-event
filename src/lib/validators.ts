@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { isUsthMajor } from "@/lib/majors";
 
 /** Common Vietnamese university student ID: letters/digits, 6–12 chars */
 export const studentIdSchema = z
@@ -27,6 +28,7 @@ export const registerSchema = z
   .object({
     studentId: studentIdSchema,
     name: z.string().trim().min(2, "Họ tên tối thiểu 2 ký tự").max(80),
+    major: z.string().refine(isUsthMajor, "Chọn ngành học"),
     password: passwordSchema,
     confirmPassword: z.string().min(1, "Nhập lại mật khẩu"),
   })
@@ -34,6 +36,17 @@ export const registerSchema = z
     message: "Mật khẩu nhập lại không khớp",
     path: ["confirmPassword"],
   });
+
+export const opinionSchema = z.object({
+  body: z
+    .string()
+    .trim()
+    .min(1, "Nhập ý kiến")
+    .max(300, "Tối đa 300 ký tự"),
+});
+
+export const MAX_LOGO_BYTES = 500 * 1024;
+export const LOGO_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 export const loginSchema = z.object({
   identifier: z.string().trim().min(1, "Nhập MSSV hoặc username"),

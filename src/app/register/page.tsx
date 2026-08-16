@@ -5,6 +5,7 @@ import { registerStudentAction } from "@/lib/actions";
 import { homeForRole } from "@/lib/session";
 import { ActionForm } from "@/components/action-form";
 import { AppHeader } from "@/components/app-header";
+import { USTH_MAJORS } from "@/lib/majors";
 
 export default async function RegisterPage() {
   const session = await auth();
@@ -41,6 +42,24 @@ export default async function RegisterPage() {
               className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2"
               autoComplete="name"
             />
+          </label>
+          <label className="block space-y-1 text-sm">
+            <span>Ngành học / Major</span>
+            <select
+              name="major"
+              required
+              defaultValue=""
+              className="w-full rounded-md border border-[var(--line)] bg-white px-3 py-2"
+            >
+              <option value="" disabled>
+                Chọn ngành
+              </option>
+              {USTH_MAJORS.map((major) => (
+                <option key={major} value={major}>
+                  {major}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="block space-y-1 text-sm">
             <span>Mật khẩu</span>

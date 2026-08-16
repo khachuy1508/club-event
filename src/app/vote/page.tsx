@@ -34,9 +34,8 @@ export default async function VotePage({ searchParams }: Props) {
       <AppHeader
         user={session.user}
         links={[
-          { href: "/qr", label: "QR" },
+          { href: "/qr", label: "Passport" },
           { href: "/history", label: "Lịch sử" },
-          { href: "/vote", label: "Vote" },
         ]}
       />
       <main className="mx-auto w-full max-w-xl flex-1 px-4 py-10">

@@ -12,6 +12,7 @@ import {
   createClubAction,
   createStaffAction,
   resetStaffPasswordAction,
+  updateClubLogoAction,
 } from "@/lib/actions";
 import { parseAdminTab } from "@/lib/admin-tabs";
 import { prisma } from "@/lib/prisma";
@@ -27,7 +28,7 @@ export default async function AdminPage({ searchParams }: Props) {
   const params = await searchParams;
   const tab = parseAdminTab(params.tab);
 
-  const [students, clubsRaw, voteGroups] = await Promise.all([
+  const [students, clubsRaw, voteGroups, opinions] = await Promise.all([
     prisma.user.findMany({
       where: { role: Role.STUDENT },
       orderBy: { createdAt: "desc" },
@@ -37,7 +38,7 @@ export default async function AdminPage({ searchParams }: Props) {
       },
     }),
     prisma.club.findMany({
-      orderBy: { name: "asc" },
+      orderBy: { sortOrder: "asc" },
       include: {
         staff: { include: { user: true } },
         _count: { select: { checkIns: true, votes: true } },
@@ -47,6 +48,12 @@ export default async function AdminPage({ searchParams }: Props) {
       by: ["clubId"],
       _count: { clubId: true },
       orderBy: { _count: { clubId: "desc" } },
+    }),
+    prisma.opinion.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        student: { select: { name: true, studentId: true } },
+      },
     }),
   ]);
 
@@ -114,12 +121,33 @@ export default async function AdminPage({ searchParams }: Props) {
             <section className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="font-[family-name:var(--font-display)] text-2xl">Clubs</h2>
-                <ActionForm action={createClubAction} className="flex flex-wrap gap-2">
+                <ActionForm
+                  action={createClubAction}
+                  encType="multipart/form-data"
+                  className="flex flex-wrap items-end gap-2"
+                >
                   <input
-                    name="name"
-                    placeholder="Tên club mới"
+                    name="nameVi"
+                    placeholder="Tên tiếng Việt"
                     required
                     className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="nameEn"
+                    placeholder="Tên tiếng Anh"
+                    required
+                    className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="code"
+                    placeholder="Mã (tuỳ chọn)"
+                    className="w-28 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
+                  />
+                  <input
+                    name="logo"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="max-w-[180px] text-xs"
                   />
                   <button
                     type="submit"
@@ -133,6 +161,7 @@ export default async function AdminPage({ searchParams }: Props) {
                 <table className="min-w-full text-left text-sm">
                   <thead className="border-b border-[var(--line)] bg-[var(--wash)] text-[var(--muted)]">
                     <tr>
+                      <th className="px-3 py-2 font-medium">Logo</th>
                       <th className="px-3 py-2 font-medium">Club</th>
                       <th className="px-3 py-2 font-medium">Check-ins</th>
                       <th className="px-3 py-2 font-medium">Votes</th>
@@ -146,7 +175,47 @@ export default async function AdminPage({ searchParams }: Props) {
                         key={club.id}
                         className="border-b border-[var(--line)] last:border-0"
                       >
-                        <td className="px-3 py-3 font-medium">{club.name}</td>
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2">
+                            {club.logoMime ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={`/api/clubs/${club.id}/logo`}
+                                alt=""
+                                className="h-10 w-10 rounded object-contain"
+                              />
+                            ) : (
+                              <span className="text-xs text-[var(--muted)]">Chưa có</span>
+                            )}
+                            <ActionForm
+                              action={updateClubLogoAction}
+                              encType="multipart/form-data"
+                              className="flex items-center gap-1"
+                            >
+                              <input type="hidden" name="clubId" value={club.id} />
+                              <input
+                                name="logo"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                required
+                                className="w-[140px] text-xs"
+                              />
+                              <button
+                                type="submit"
+                                className="rounded border border-[var(--line)] px-2 py-1 text-xs"
+                              >
+                                Lưu
+                              </button>
+                            </ActionForm>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3">
+                          <p className="font-medium">{club.nameEn}</p>
+                          <p className="text-xs text-[var(--muted)]">{club.nameVi}</p>
+                          {club.code ? (
+                            <p className="text-xs text-[var(--muted)]">{club.code}</p>
+                          ) : null}
+                        </td>
                         <td className="px-3 py-3">{club._count.checkIns}</td>
                         <td className="px-3 py-3">{club._count.votes}</td>
                         <td className="px-3 py-3">
@@ -310,6 +379,44 @@ export default async function AdminPage({ searchParams }: Props) {
                 voteAt: student.vote?.createdAt.toISOString() ?? null,
               }))}
             />
+          ) : null}
+
+          {tab === "opinions" ? (
+            <section className="space-y-3">
+              <h2 className="font-[family-name:var(--font-display)] text-2xl">Opinions</h2>
+              <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
+                <table className="min-w-full text-left text-sm">
+                  <thead className="border-b border-[var(--line)] bg-[var(--wash)] text-[var(--muted)]">
+                    <tr>
+                      <th className="px-3 py-2 font-medium">MSSV</th>
+                      <th className="px-3 py-2 font-medium">Tên</th>
+                      <th className="px-3 py-2 font-medium">Ý kiến</th>
+                      <th className="px-3 py-2 font-medium">Thời gian</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {opinions.length === 0 ? (
+                      <tr>
+                        <td colSpan={4} className="px-3 py-6 text-[var(--muted)]">
+                          Chưa có ý kiến
+                        </td>
+                      </tr>
+                    ) : (
+                      opinions.map((item) => (
+                        <tr key={item.id} className="border-b border-[var(--line)] last:border-0">
+                          <td className="px-3 py-3">{item.student.studentId}</td>
+                          <td className="px-3 py-3">{item.student.name}</td>
+                          <td className="max-w-md whitespace-pre-wrap px-3 py-3">{item.body}</td>
+                          <td className="whitespace-nowrap px-3 py-3 text-[var(--muted)]">
+                            {item.createdAt.toLocaleString("vi-VN")}
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           ) : null}
         </div>
       </main>
