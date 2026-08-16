@@ -3,13 +3,14 @@
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, unstable_rethrow } from "next/navigation";
 import { Role } from "@/generated/prisma/client";
 import { signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { parseClubLogo } from "@/lib/logo";
 import {
+  DEFAULT_STUDENT_PASSWORD,
   MAX_CLUBS,
   MIN_CHECKINS_TO_VOTE,
   createStaffSchema,
@@ -61,20 +62,23 @@ export async function registerStudentAction(
   });
 
   try {
-    // redirectTo gắn cookie session + chuyển trang trong một nhịp (tránh /qr → login)
     await signIn("credentials", {
       identifier: parsed.data.studentId,
       password: parsed.data.password,
-      redirectTo: "/qr",
+      redirect: false,
     });
   } catch (error) {
+    unstable_rethrow(error);
     if (error instanceof AuthError) {
-      return { ok: false, message: "Đăng ký thành công nhưng đăng nhập thất bại. Hãy đăng nhập lại." };
+      return {
+        ok: false,
+        message: "Đăng ký thành công nhưng đăng nhập thất bại. Hãy đăng nhập lại.",
+      };
     }
     throw error;
   }
 
-  return { ok: true, message: "Đăng ký thành công" };
+  redirect("/qr");
 }
 
 export async function loginAction(
@@ -114,16 +118,17 @@ export async function loginAction(
     await signIn("credentials", {
       identifier,
       password,
-      redirectTo,
+      redirect: false,
     });
   } catch (error) {
+    unstable_rethrow(error);
     if (error instanceof AuthError) {
       return { ok: false, message: "Sai tài khoản hoặc mật khẩu" };
     }
     throw error;
   }
 
-  return { ok: true, message: "Đăng nhập thành công" };
+  redirect(redirectTo);
 }
 
 export async function logoutAction() {
@@ -299,8 +304,7 @@ export async function createClubAction(
         slug,
         sortOrder: count + 1,
         isActive: true,
-        logoMime: logoResult.logo?.mime,
-        logoBytes: logoResult.logo?.bytes,
+        logoSrc: logoResult.src,
       },
     });
   } catch (error) {
@@ -318,7 +322,7 @@ export async function createClubAction(
   return { ok: true, message: `Đã tạo club ${nameEn}` };
 }
 
-export async function updateClubLogoAction(
+export async function updateClubAction(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
@@ -326,24 +330,35 @@ export async function updateClubLogoAction(
   const clubId = String(formData.get("clubId") ?? "");
   if (!clubId) return { ok: false, message: "Thiếu club" };
 
-  const logoResult = await parseClubLogo(formData.get("logo"));
-  if (!logoResult.ok) return logoResult;
-  if (!logoResult.logo) return { ok: false, message: "Chọn file logo" };
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const nameVi = String(formData.get("nameVi") ?? nameEn).trim();
+  const codeRaw = String(formData.get("code") ?? "").trim();
+  const code = codeRaw.length > 0 ? codeRaw : null;
+
+  if (nameEn.length < 2) {
+    return { ok: false, message: "Tên club (EN) tối thiểu 2 ký tự" };
+  }
 
   const club = await prisma.club.findUnique({ where: { id: clubId } });
   if (!club) return { ok: false, message: "Không tìm thấy club" };
 
+  const logoResult = await parseClubLogo(formData.get("logo"));
+  if (!logoResult.ok) return logoResult;
+
   await prisma.club.update({
     where: { id: clubId },
     data: {
-      logoMime: logoResult.logo.mime,
-      logoBytes: logoResult.logo.bytes,
+      name: nameEn,
+      nameEn,
+      nameVi,
+      code,
+      ...(logoResult.src ? { logoSrc: logoResult.src } : {}),
     },
   });
 
   revalidatePath("/admin");
   revalidatePath("/qr");
-  return { ok: true, message: `Đã cập nhật logo ${club.name}` };
+  return { ok: true, message: `Đã cập nhật ${nameEn}` };
 }
 
 export async function submitOpinionAction(
@@ -468,4 +483,32 @@ export async function resetStaffPasswordAction(
 
   revalidatePath("/admin");
   return { ok: true, message: `Đã reset mật khẩu cho ${user.studentId}` };
+}
+
+export async function resetStudentPasswordAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireSession([Role.ADMIN]);
+
+  const userId = String(formData.get("userId") ?? "");
+  if (!userId) {
+    return { ok: false, message: "Thiếu sinh viên" };
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.role !== Role.STUDENT) {
+    return { ok: false, message: "Không tìm thấy sinh viên" };
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: await bcrypt.hash(DEFAULT_STUDENT_PASSWORD, 10) },
+  });
+
+  revalidatePath("/admin");
+  return {
+    ok: true,
+    message: `Đã reset mật khẩu cho ${user.studentId}`,
+  };
 }

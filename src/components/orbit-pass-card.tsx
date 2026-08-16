@@ -4,7 +4,6 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { GraduationCap, IdCard, UserRound, X } from "lucide-react";
-import { logoutAction } from "@/lib/actions";
 
 type Props = {
   token: string;
@@ -62,14 +61,6 @@ export function OrbitPassCard({ token, studentId, name, major }: Props) {
               className="mx-auto h-auto w-full"
             />
           </button>
-          <form action={logoutAction} className="mt-1.5 sm:mt-2">
-            <button
-              type="submit"
-              className="w-full rounded-md border border-violet-200 bg-white/90 px-1 py-1 text-[9px] font-medium text-violet-800 sm:rounded-lg sm:px-2 sm:py-1.5 sm:text-xs"
-            >
-              Đăng xuất
-            </button>
-          </form>
         </div>
       </div>
       <p className="mt-2 text-center text-[9px] leading-snug text-slate-500 sm:mt-4 sm:text-sm">

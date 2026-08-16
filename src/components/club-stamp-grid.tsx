@@ -1,11 +1,13 @@
 import { PassportOpinionCard } from "@/components/passport-opinion-card";
 import { PassportVoteCard } from "@/components/passport-vote-card";
+import { logoutAction } from "@/lib/actions";
 
 type ClubStamp = {
   id: string;
   nameEn: string;
   code: string | null;
   hasLogo: boolean;
+  logoSrc?: string | null;
   checkedIn: boolean;
 };
 
@@ -52,7 +54,17 @@ export function ClubPassportBoard({
           votedClubName={votedClubName}
           embedded
         />
-        <PassportOpinionCard embedded />
+        <div className="flex min-w-0 flex-col gap-2 sm:gap-3">
+          <PassportOpinionCard embedded />
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="w-full rounded-md border border-violet-200 bg-white/90 px-2 py-1.5 text-[9px] font-medium text-violet-800 sm:rounded-xl sm:px-4 sm:py-2.5 sm:text-sm"
+            >
+              Đăng xuất
+            </button>
+          </form>
+        </div>
       </div>
     </section>
   );
@@ -64,7 +76,7 @@ function StampMark({ club }: { club: ClubStamp }) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
-        src={`/api/clubs/${club.id}/logo`}
+        src={club.logoSrc ?? ""}
         alt=""
         className={`h-7 w-7 object-contain sm:h-12 sm:w-12 ${visual}`}
       />

@@ -50,14 +50,25 @@ async function upsertCatalogClubs() {
   }
 
   const catalogSlugs = new Set(CLUBS_CATALOG.map(catalogSlug));
-  const allClubs = await prisma.club.findMany({ select: { id: true, slug: true } });
+  const allClubs = await prisma.club.findMany({ select: { id: true, slug: true, name: true } });
   for (const club of allClubs) {
-    if (!catalogSlugs.has(club.slug)) {
+    if (catalogSlugs.has(club.slug)) {
       await prisma.club.update({
         where: { id: club.id },
-        data: { isActive: false },
+        data: { isActive: true },
       });
+      continue;
     }
+    await prisma.club.delete({ where: { id: club.id } });
+    console.log("Deleted sample club:", club.name);
+  }
+
+  const orphanStaff = await prisma.user.findMany({
+    where: { role: Role.CLUB_STAFF, clubStaff: null },
+  });
+  for (const user of orphanStaff) {
+    await prisma.user.delete({ where: { id: user.id } });
+    console.log("Deleted orphan staff:", user.studentId);
   }
 }
 

@@ -1,27 +1,41 @@
 "use client";
 
 import Link from "next/link";
+import {
+  MessageSquareText,
+  Trophy,
+  UserPlus,
+  Users,
+  Building2,
+} from "lucide-react";
 import { ADMIN_TABS, type AdminTabId } from "@/lib/admin-tabs";
+
+const ICONS = {
+  best: Trophy,
+  clubs: Building2,
+  staff: UserPlus,
+  students: Users,
+  opinions: MessageSquareText,
+} as const;
 
 export function AdminTabNav({ active }: { active: AdminTabId }) {
   return (
-    <nav
-      className="-mx-1 flex gap-1 overflow-x-auto border-b border-[var(--line)] pb-px"
-      aria-label="Admin sections"
-    >
+    <nav aria-label="Admin sections" className="flex flex-col gap-1">
       {ADMIN_TABS.map((tab) => {
         const isActive = tab.id === active;
+        const Icon = ICONS[tab.id];
         return (
           <Link
             key={tab.id}
             href={`/admin?tab=${tab.id}`}
-            className={`shrink-0 rounded-t-md px-3 py-2.5 text-sm transition ${
+            className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition ${
               isActive
-                ? "border border-b-0 border-[var(--line)] bg-[var(--surface)] font-semibold text-[var(--ink)]"
-                : "text-[var(--muted)] hover:text-[var(--ink)]"
+                ? "bg-[var(--accent)] font-semibold text-white"
+                : "text-[var(--muted)] hover:bg-[var(--wash)] hover:text-[var(--ink)]"
             }`}
             aria-current={isActive ? "page" : undefined}
           >
+            <Icon className="h-4 w-4 shrink-0" aria-hidden />
             {tab.label}
           </Link>
         );

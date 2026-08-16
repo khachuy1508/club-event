@@ -7,7 +7,7 @@ type Props = {
   action: (prev: ActionResult | null, formData: FormData) => Promise<ActionResult>;
   children: React.ReactNode;
   className?: string;
-  encType?: string;
+  onSuccess?: () => void;
 };
 
 function snapshotForm(form: HTMLFormElement) {
@@ -48,17 +48,22 @@ function restoreForm(form: HTMLFormElement, saved: Record<string, string>) {
   }
 }
 
-export function ActionForm({ action, children, className, encType }: Props) {
+export function ActionForm({ action, children, className, onSuccess }: Props) {
   const [state, formAction, pending] = useActionState(action, null);
   const formRef = useRef<HTMLFormElement>(null);
   const savedRef = useRef<Record<string, string>>({});
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
 
   useEffect(() => {
-    if (!state || state.ok) return;
+    if (!state) return;
+    if (state.ok) {
+      onSuccessRef.current?.();
+      return;
+    }
     const form = formRef.current;
     if (!form) return;
 
-    // React resets uncontrolled fields after the action; restore on the next frame.
     const id = window.requestAnimationFrame(() => {
       restoreForm(form, savedRef.current);
     });
@@ -69,7 +74,6 @@ export function ActionForm({ action, children, className, encType }: Props) {
     <form
       ref={formRef}
       className={className}
-      encType={encType}
       action={(formData) => {
         if (formRef.current) {
           savedRef.current = snapshotForm(formRef.current);

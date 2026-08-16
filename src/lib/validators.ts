@@ -79,6 +79,7 @@ export const resetStaffPasswordSchema = z
 
 export const MAX_CLUBS = 20;
 export const MIN_CHECKINS_TO_VOTE = 3;
+export const DEFAULT_STUDENT_PASSWORD = "Clubday@2026";
 
 export function slugify(input: string) {
   return input

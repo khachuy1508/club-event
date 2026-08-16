@@ -8,6 +8,44 @@ import { loginSchema } from "@/lib/validators";
 
 applyAuthUrlEnv();
 
+function credentialString(value: unknown) {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value) && typeof value[0] === "string") return value[0];
+  return "";
+}
+
+function passwordHashFromDb(value: unknown) {
+  if (typeof value === "string") return value;
+  if (value instanceof Uint8Array) return new TextDecoder().decode(value);
+  return "";
+}
+
+async function findUserByStudentIds(studentIds: string[]) {
+  const select = {
+    id: true,
+    name: true,
+    role: true,
+    studentId: true,
+    passwordHash: true,
+    clubStaff: {
+      select: {
+        clubId: true,
+        club: { select: { name: true } },
+      },
+    },
+  } as const;
+
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const user = await prisma.user.findFirst({
+      where: { studentId: { in: studentIds } },
+      select,
+    });
+    if (user) return user;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
+  return null;
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
   session: { strategy: "jwt" },
@@ -22,28 +60,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials);
+        const identifier = credentialString(credentials?.identifier);
+        const password = credentialString(credentials?.password);
+        const parsed = loginSchema.safeParse({ identifier, password });
         if (!parsed.success) return null;
 
-        const identifier = parsed.data.identifier.trim().toUpperCase();
-        const password = parsed.data.password;
+        const trimmed = parsed.data.identifier;
+        const studentIds = [
+          ...new Set([trimmed, trimmed.toUpperCase(), trimmed.toLowerCase()]),
+        ];
 
-        const user = await prisma.user.findFirst({
-          where: {
-            OR: [
-              { studentId: identifier },
-              { studentId: parsed.data.identifier.trim() },
-              { studentId: parsed.data.identifier.trim().toLowerCase() },
-            ],
-          },
-          include: {
-            clubStaff: { include: { club: true } },
-          },
-        });
-
+        const user = await findUserByStudentIds(studentIds);
         if (!user) return null;
 
-        const valid = await bcrypt.compare(password, user.passwordHash);
+        const hash = passwordHashFromDb(user.passwordHash);
+        const valid = hash ? await bcrypt.compare(parsed.data.password, hash) : false;
         if (!valid) return null;
 
         return {

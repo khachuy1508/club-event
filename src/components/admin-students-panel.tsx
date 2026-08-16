@@ -1,6 +1,8 @@
 "use client";
 
 import { useDeferredValue, useEffect, useId, useMemo, useState } from "react";
+import { ActionForm } from "@/components/action-form";
+import { resetStudentPasswordAction } from "@/lib/actions";
 
 export type AdminStudentRow = {
   id: string;
@@ -18,6 +20,36 @@ export type AdminStudentRow = {
 type Props = {
   students: AdminStudentRow[];
 };
+
+function ResetStudentPasswordButton({
+  userId,
+  studentId,
+}: {
+  userId: string;
+  studentId: string;
+}) {
+  return (
+    <ActionForm action={resetStudentPasswordAction} className="inline-flex">
+      <input type="hidden" name="userId" value={userId} />
+      <button
+        type="submit"
+        className="rounded-md bg-red-600 px-3 py-1.5 text-sm text-white hover:bg-red-700"
+        onClick={(event) => {
+          event.stopPropagation();
+          if (
+            !window.confirm(
+              `Reset mật khẩu của ${studentId || "sinh viên này"}?`,
+            )
+          ) {
+            event.preventDefault();
+          }
+        }}
+      >
+        Reset password
+      </button>
+    </ActionForm>
+  );
+}
 
 function formatWhen(iso: string) {
   try {
@@ -88,10 +120,10 @@ function StudentDetailModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_24px_60px_-30px_rgba(15,40,35,0.55)]"
+        className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] shadow-[0_24px_60px_-30px_rgba(15,40,35,0.55)]"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3">
+        <div className="overflow-y-auto p-5">
           <div>
             <h3
               id={titleId}
@@ -101,52 +133,59 @@ function StudentDetailModal({
             </h3>
             <p className="mt-1 text-sm text-[var(--muted)]">{student.studentId}</p>
           </div>
+
+          <section className="mt-6 space-y-2">
+            <h4 className="text-sm font-semibold text-[var(--ink)]">Check-in</h4>
+            {student.checkIns.length === 0 ? (
+              <p className="text-sm text-[var(--muted)]">Chưa check-in club nào.</p>
+            ) : (
+              <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
+                {student.checkIns.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex items-start justify-between gap-3 py-3 text-sm"
+                  >
+                    <span className="font-medium">{item.clubName}</span>
+                    <span className="shrink-0 text-[var(--muted)]">
+                      {formatWhen(item.createdAt)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          <section className="mt-6 space-y-2">
+            <h4 className="text-sm font-semibold text-[var(--ink)]">Vote Best Club</h4>
+            {student.voteClubName ? (
+              <p className="text-sm">
+                <span className="font-medium">{student.voteClubName}</span>
+                {student.voteAt ? (
+                  <span className="text-[var(--muted)]">
+                    {" "}
+                    · {formatWhen(student.voteAt)}
+                  </span>
+                ) : null}
+              </p>
+            ) : (
+              <p className="text-sm text-[var(--muted)]">Chưa vote.</p>
+            )}
+          </section>
+        </div>
+
+        <footer className="flex shrink-0 items-center justify-between gap-2 border-t border-[var(--line)] px-5 py-3">
+          <ResetStudentPasswordButton
+            userId={student.id}
+            studentId={student.studentId}
+          />
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-[var(--line)] px-2.5 py-1 text-sm hover:bg-[var(--wash)]"
+            className="rounded-md border border-[var(--line)] px-3 py-1.5 text-sm hover:bg-[var(--wash)]"
           >
             Đóng
           </button>
-        </div>
-
-        <section className="mt-6 space-y-2">
-          <h4 className="text-sm font-semibold text-[var(--ink)]">Check-in</h4>
-          {student.checkIns.length === 0 ? (
-            <p className="text-sm text-[var(--muted)]">Chưa check-in club nào.</p>
-          ) : (
-            <ul className="divide-y divide-[var(--line)] border-y border-[var(--line)]">
-              {student.checkIns.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex items-start justify-between gap-3 py-3 text-sm"
-                >
-                  <span className="font-medium">{item.clubName}</span>
-                  <span className="shrink-0 text-[var(--muted)]">
-                    {formatWhen(item.createdAt)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-
-        <section className="mt-6 space-y-2">
-          <h4 className="text-sm font-semibold text-[var(--ink)]">Vote Best Club</h4>
-          {student.voteClubName ? (
-            <p className="text-sm">
-              <span className="font-medium">{student.voteClubName}</span>
-              {student.voteAt ? (
-                <span className="text-[var(--muted)]">
-                  {" "}
-                  · {formatWhen(student.voteAt)}
-                </span>
-              ) : null}
-            </p>
-          ) : (
-            <p className="text-sm text-[var(--muted)]">Chưa vote.</p>
-          )}
-        </section>
+        </footer>
       </div>
     </div>
   );

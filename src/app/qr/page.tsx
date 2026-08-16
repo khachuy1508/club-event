@@ -29,7 +29,7 @@ export default async function QrPage() {
         id: true,
         nameEn: true,
         code: true,
-        logoMime: true,
+        logoSrc: true,
       },
     }),
     prisma.checkIn.findMany({
@@ -77,7 +77,8 @@ export default async function QrPage() {
                 id: club.id,
                 nameEn: club.nameEn,
                 code: club.code,
-                hasLogo: Boolean(club.logoMime),
+                hasLogo: Boolean(club.logoSrc),
+                logoSrc: club.logoSrc,
                 checkedIn: checkedInIds.has(club.id),
               }))}
               checkedInClubs={checkIns.map((item) => ({

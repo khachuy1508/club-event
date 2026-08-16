@@ -4,7 +4,7 @@ import { PrismaNeonHttp } from "@prisma/adapter-neon";
 // Bump this key whenever the DB adapter changes so HMR doesn't keep a stale client
 // (old SQLite/libsql instance caused SQLITE_READONLY after migrating to Neon).
 const globalForPrisma = globalThis as unknown as {
-  prismaNeonHttpV1?: PrismaClient;
+  prismaNeonHttpLogoSrc?: PrismaClient;
 };
 
 function sanitizeDatabaseUrl(url: string) {
@@ -39,8 +39,8 @@ function createPrismaClient() {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prismaNeonHttpV1 ?? createPrismaClient();
+export const prisma = globalForPrisma.prismaNeonHttpLogoSrc ?? createPrismaClient();
 
 if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prismaNeonHttpV1 = prisma;
+  globalForPrisma.prismaNeonHttpLogoSrc = prisma;
 }

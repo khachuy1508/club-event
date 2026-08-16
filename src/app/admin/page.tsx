@@ -1,18 +1,16 @@
 import { Role } from "@/generated/prisma/client";
 import { AppHeader } from "@/components/app-header";
 import { ActionForm } from "@/components/action-form";
+import { AdminClubsPanel } from "@/components/admin-clubs-panel";
 import { AdminStudentsPanel } from "@/components/admin-students-panel";
 import { AdminTabNav } from "@/components/admin-tab-nav";
 import {
   BestClubPodium,
   buildBestClubPodium,
 } from "@/components/best-club-podium";
-import { ToggleClubButton } from "@/components/toggle-club-button";
 import {
-  createClubAction,
   createStaffAction,
   resetStaffPasswordAction,
-  updateClubLogoAction,
 } from "@/lib/actions";
 import { parseAdminTab } from "@/lib/admin-tabs";
 import { prisma } from "@/lib/prisma";
@@ -86,7 +84,15 @@ export default async function AdminPage({ searchParams }: Props) {
   return (
     <>
       <AppHeader user={session.user} />
-      <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 px-4 py-10">
+      <div className="mx-auto flex w-full max-w-6xl flex-1 items-start gap-4 px-4 py-8 sm:gap-6 lg:gap-8">
+        <aside className="sticky top-6 w-40 shrink-0 sm:w-52">
+          <p className="mb-3 font-[family-name:var(--font-display)] text-lg text-[var(--ink)] lg:mb-4">
+            Admin
+          </p>
+          <AdminTabNav active={tab} />
+        </aside>
+
+        <main className="min-w-0 flex-1 space-y-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">
@@ -107,8 +113,6 @@ export default async function AdminPage({ searchParams }: Props) {
           <Stat label="Tổng vote" value={totalVotes} />
         </section>
 
-        <AdminTabNav active={tab} />
-
         <div className="min-h-[320px]">
           {tab === "best" ? (
             <BestClubPodium
@@ -118,138 +122,20 @@ export default async function AdminPage({ searchParams }: Props) {
           ) : null}
 
           {tab === "clubs" ? (
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h2 className="font-[family-name:var(--font-display)] text-2xl">Clubs</h2>
-                <ActionForm
-                  action={createClubAction}
-                  encType="multipart/form-data"
-                  className="flex flex-wrap items-end gap-2"
-                >
-                  <input
-                    name="nameVi"
-                    placeholder="Tên tiếng Việt"
-                    required
-                    className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-                  />
-                  <input
-                    name="nameEn"
-                    placeholder="Tên tiếng Anh"
-                    required
-                    className="rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-                  />
-                  <input
-                    name="code"
-                    placeholder="Mã (tuỳ chọn)"
-                    className="w-28 rounded-md border border-[var(--line)] bg-white px-3 py-2 text-sm"
-                  />
-                  <input
-                    name="logo"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="max-w-[180px] text-xs"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm text-white"
-                  >
-                    Thêm club
-                  </button>
-                </ActionForm>
-              </div>
-              <div className="overflow-x-auto rounded-xl border border-[var(--line)] bg-[var(--surface)]">
-                <table className="min-w-full text-left text-sm">
-                  <thead className="border-b border-[var(--line)] bg-[var(--wash)] text-[var(--muted)]">
-                    <tr>
-                      <th className="px-3 py-2 font-medium">Logo</th>
-                      <th className="px-3 py-2 font-medium">Club</th>
-                      <th className="px-3 py-2 font-medium">Check-ins</th>
-                      <th className="px-3 py-2 font-medium">Votes</th>
-                      <th className="px-3 py-2 font-medium">Staff</th>
-                      <th className="px-3 py-2 font-medium">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {clubs.map((club) => (
-                      <tr
-                        key={club.id}
-                        className="border-b border-[var(--line)] last:border-0"
-                      >
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-2">
-                            {club.logoMime ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={`/api/clubs/${club.id}/logo`}
-                                alt=""
-                                className="h-10 w-10 rounded object-contain"
-                              />
-                            ) : (
-                              <span className="text-xs text-[var(--muted)]">Chưa có</span>
-                            )}
-                            <ActionForm
-                              action={updateClubLogoAction}
-                              encType="multipart/form-data"
-                              className="flex items-center gap-1"
-                            >
-                              <input type="hidden" name="clubId" value={club.id} />
-                              <input
-                                name="logo"
-                                type="file"
-                                accept="image/jpeg,image/png,image/webp"
-                                required
-                                className="w-[140px] text-xs"
-                              />
-                              <button
-                                type="submit"
-                                className="rounded border border-[var(--line)] px-2 py-1 text-xs"
-                              >
-                                Lưu
-                              </button>
-                            </ActionForm>
-                          </div>
-                        </td>
-                        <td className="px-3 py-3">
-                          <p className="font-medium">{club.nameEn}</p>
-                          <p className="text-xs text-[var(--muted)]">{club.nameVi}</p>
-                          {club.code ? (
-                            <p className="text-xs text-[var(--muted)]">{club.code}</p>
-                          ) : null}
-                        </td>
-                        <td className="px-3 py-3">{club._count.checkIns}</td>
-                        <td className="px-3 py-3">{club._count.votes}</td>
-                        <td className="px-3 py-3">
-                          {club.staff.length === 0 ? (
-                            <span className="text-[var(--muted)]">Chưa có</span>
-                          ) : (
-                            <ul className="space-y-0.5">
-                              {club.staff.map((s) => (
-                                <li key={s.id}>{s.user.studentId}</li>
-                              ))}
-                            </ul>
-                          )}
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={
-                                club.isActive ? "text-emerald-700" : "text-rose-700"
-                              }
-                            >
-                              {club.isActive ? "Active" : "Hidden"}
-                            </span>
-                            <ToggleClubButton
-                              clubId={club.id}
-                              isActive={club.isActive}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </section>
+            <AdminClubsPanel
+              clubs={clubs.map((club) => ({
+                id: club.id,
+                nameVi: club.nameVi,
+                nameEn: club.nameEn,
+                code: club.code,
+                hasLogo: Boolean(club.logoSrc),
+                logoSrc: club.logoSrc,
+                isActive: club.isActive,
+                checkIns: club._count.checkIns,
+                votes: club._count.votes,
+                staffUsernames: club.staff.map((s) => s.user.studentId ?? ""),
+              }))}
+            />
           ) : null}
 
           {tab === "staff" ? (
@@ -419,7 +305,8 @@ export default async function AdminPage({ searchParams }: Props) {
             </section>
           ) : null}
         </div>
-      </main>
+        </main>
+      </div>
     </>
   );
 }
