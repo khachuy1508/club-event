@@ -2,6 +2,7 @@ import { Role } from "@/generated/prisma/client";
 import { AppHeader } from "@/components/app-header";
 import { ActionForm } from "@/components/action-form";
 import { AdminClubsPanel } from "@/components/admin-clubs-panel";
+import { AdminEventHoursForm } from "@/components/admin-event-hours-form";
 import { AdminStudentsPanel } from "@/components/admin-students-panel";
 import { AdminTabNav } from "@/components/admin-tab-nav";
 import {
@@ -13,6 +14,7 @@ import {
   resetStaffPasswordAction,
 } from "@/lib/actions";
 import { parseAdminTab } from "@/lib/admin-tabs";
+import { getEventHoursSettings } from "@/lib/event-hours";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import Link from "next/link";
@@ -26,7 +28,7 @@ export default async function AdminPage({ searchParams }: Props) {
   const params = await searchParams;
   const tab = parseAdminTab(params.tab);
 
-  const [students, clubsRaw, voteGroups, opinions] = await Promise.all([
+  const [students, clubsRaw, voteGroups, opinions, eventHours] = await Promise.all([
     prisma.user.findMany({
       where: { role: Role.STUDENT },
       orderBy: { createdAt: "desc" },
@@ -53,6 +55,7 @@ export default async function AdminPage({ searchParams }: Props) {
         student: { select: { name: true, studentId: true } },
       },
     }),
+    getEventHoursSettings(),
   ]);
 
   // Normalize staff to always be an array (avoids HMR/stale client returning a single object)
@@ -136,6 +139,10 @@ export default async function AdminPage({ searchParams }: Props) {
                 staffUsernames: club.staff.map((s) => s.user.studentId ?? ""),
               }))}
             />
+          ) : null}
+
+          {tab === "hours" ? (
+            <AdminEventHoursForm settings={eventHours} />
           ) : null}
 
           {tab === "staff" ? (
@@ -259,6 +266,7 @@ export default async function AdminPage({ searchParams }: Props) {
                 checkIns: student.checkIns.map((item) => ({
                   id: item.id,
                   clubName: item.club.name,
+                  slotName: item.slotName,
                   createdAt: item.createdAt.toISOString(),
                 })),
                 voteClubName: student.vote?.club.name ?? null,

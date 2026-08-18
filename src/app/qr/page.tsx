@@ -1,7 +1,9 @@
 import { Role } from "@/generated/prisma/client";
-import { ClubPassportBoard } from "@/components/club-stamp-grid";
 import { OrbitPassCard } from "@/components/orbit-pass-card";
+import { PassportLiveBoard } from "@/components/passport-live-board";
+import { getPassportStampsForUser } from "@/lib/passport-stamps";
 import { createStudentQrToken } from "@/lib/qr";
+import { getPublicPusherConfig } from "@/lib/realtime";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 
@@ -16,39 +18,20 @@ function PassportFrame({ children }: { children: React.ReactNode }) {
 export default async function QrPage() {
   const session = await requireSession([Role.STUDENT]);
   const studentId = session.user.studentId ?? "";
+  const pusher = getPublicPusherConfig();
 
-  const [student, clubs, checkIns, vote, token] = await Promise.all([
+  const [student, stamps, token] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
       select: { name: true, major: true },
     }),
-    prisma.club.findMany({
-      where: { isActive: true },
-      orderBy: [{ sortOrder: "asc" }, { nameEn: "asc" }],
-      select: {
-        id: true,
-        nameEn: true,
-        code: true,
-        logoSrc: true,
-      },
-    }),
-    prisma.checkIn.findMany({
-      where: { studentId: session.user.id },
-      select: { clubId: true, club: { select: { id: true, name: true } } },
-      orderBy: { createdAt: "asc" },
-    }),
-    prisma.vote.findUnique({
-      where: { studentId: session.user.id },
-      include: { club: true },
-    }),
+    getPassportStampsForUser(session.user.id),
     createStudentQrToken({
       sub: session.user.id,
       studentId,
       name: session.user.name,
     }),
   ]);
-
-  const checkedInIds = new Set(checkIns.map((item) => item.clubId));
 
   return (
     <div className="relative isolate min-h-dvh overflow-x-hidden bg-[#1a3f8a]">
@@ -61,7 +44,7 @@ export default async function QrPage() {
         />
       </div>
       <div className="relative z-10 flex min-h-dvh flex-col">
-        <main className="mx-auto flex w-full max-w-lg min-w-0 flex-1 flex-col gap-3 px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[22vw] sm:max-w-5xl sm:gap-6 sm:px-4 sm:pt-[12rem]">
+        <main className="mx-auto flex w-full max-w-lg min-w-0 flex-1 flex-col gap-3 px-3 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-[140px] sm:max-w-5xl sm:gap-6 sm:px-4 sm:pt-[200px]">
           <PassportFrame>
             <OrbitPassCard
               token={token}
@@ -72,20 +55,13 @@ export default async function QrPage() {
           </PassportFrame>
 
           <PassportFrame>
-            <ClubPassportBoard
-              clubs={clubs.map((club) => ({
-                id: club.id,
-                nameEn: club.nameEn,
-                code: club.code,
-                hasLogo: Boolean(club.logoSrc),
-                logoSrc: club.logoSrc,
-                checkedIn: checkedInIds.has(club.id),
-              }))}
-              checkedInClubs={checkIns.map((item) => ({
-                id: item.club.id,
-                name: item.club.name,
-              }))}
-              votedClubName={vote?.club.name ?? null}
+            <PassportLiveBoard
+              userId={session.user.id}
+              pusherKey={pusher?.key ?? null}
+              pusherCluster={pusher?.cluster ?? null}
+              clubs={stamps.clubs}
+              checkedInClubs={stamps.checkedInClubs}
+              votedClubName={stamps.votedClubName}
             />
           </PassportFrame>
 

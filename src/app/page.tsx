@@ -54,6 +54,12 @@ export default async function HomePage() {
                   </Link>
                 </>
               )}
+              <Link
+                href="/leaderboard"
+                className="rounded-md border border-white/40 px-5 py-3 text-white transition hover:bg-white/10"
+              >
+                BXH công khai
+              </Link>
             </div>
           </div>
         </section>

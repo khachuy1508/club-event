@@ -64,6 +64,7 @@ model CheckIn {
   studentId     String
   clubId        String
   checkedInById String
+  slotName      String?
   createdAt     DateTime @default(now())
 
   student     User @relation("StudentCheckIns", fields: [studentId], references: [id], onDelete: Cascade)
@@ -96,4 +97,15 @@ model Opinion {
   student User @relation(fields: [studentId], references: [id], onDelete: Cascade)
 
   @@index([studentId])
+}
+
+model EventSettings {
+  id             String   @id @default("default")
+  morningName    String
+  morningStart   String
+  morningEnd     String
+  afternoonName  String
+  afternoonStart String
+  afternoonEnd   String
+  updatedAt      DateTime @updatedAt
 }

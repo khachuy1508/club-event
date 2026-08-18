@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  Clock,
   MessageSquareText,
   Trophy,
   UserPlus,
@@ -13,6 +14,7 @@ import { ADMIN_TABS, type AdminTabId } from "@/lib/admin-tabs";
 const ICONS = {
   best: Trophy,
   clubs: Building2,
+  hours: Clock,
   staff: UserPlus,
   students: Users,
   opinions: MessageSquareText,

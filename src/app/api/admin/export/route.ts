@@ -9,60 +9,48 @@ export async function GET() {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  const [students, clubs, votes] = await Promise.all([
-    prisma.user.findMany({
-      where: { role: Role.STUDENT },
-      orderBy: { createdAt: "desc" },
-      include: {
-        checkIns: { include: { club: true } },
-        vote: { include: { club: true } },
+  const students = await prisma.user.findMany({
+    where: { role: Role.STUDENT },
+    orderBy: { createdAt: "desc" },
+    select: {
+      studentId: true,
+      name: true,
+      major: true,
+      checkIns: { select: { id: true } },
+      opinions: {
+        orderBy: { createdAt: "asc" },
+        select: { body: true },
       },
-    }),
-    prisma.club.findMany({
-      include: {
-        _count: { select: { checkIns: true, votes: true } },
-      },
-      orderBy: { name: "asc" },
-    }),
-    prisma.vote.groupBy({
-      by: ["clubId"],
-      _count: { clubId: true },
-    }),
-  ]);
-
-  const voteMap = Object.fromEntries(votes.map((v) => [v.clubId, v._count.clubId]));
+    },
+  });
 
   const lines = [
-    "type,studentId,studentName,club,extra",
-    ...students.flatMap((s) => {
-      const base = [
-        `student,${s.studentId},${csv(s.name)},,checkins=${s.checkIns.length}`,
-      ];
-      const checkinLines = s.checkIns.map(
-        (c) =>
-          `checkin,${s.studentId},${csv(s.name)},${csv(c.club.name)},${c.createdAt.toISOString()}`,
-      );
-      const voteLine = s.vote
-        ? [`vote,${s.studentId},${csv(s.name)},${csv(s.vote.club.name)},${s.vote.createdAt.toISOString()}`]
-        : [];
-      return [...base, ...checkinLines, ...voteLine];
+    "MSSV,Tên,Ngành,Lời nhắn,Số dấu",
+    ...students.map((student) => {
+      const messages = student.opinions.map((item) => item.body.trim()).filter(Boolean);
+      return [
+        csv(student.studentId ?? ""),
+        csv(student.name),
+        csv(student.major ?? ""),
+        csv(messages.join(" | ")),
+        String(student.checkIns.length),
+      ].join(",");
     }),
-    ...clubs.map(
-      (c) =>
-        `club_summary,,${csv(c.name)},checkins=${c._count.checkIns},votes=${voteMap[c.id] ?? 0}`,
-    ),
   ];
 
-  return new NextResponse(lines.join("\n"), {
+  // BOM helps Excel open Vietnamese characters correctly
+  const body = `\uFEFF${lines.join("\n")}`;
+
+  return new NextResponse(body, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": 'attachment; filename="club-event-export.csv"',
+      "Content-Disposition": 'attachment; filename="students-export.csv"',
     },
   });
 }
 
 function csv(value: string) {
-  if (value.includes(",") || value.includes('"')) {
+  if (/[",\n\r]/.test(value)) {
     return `"${value.replace(/"/g, '""')}"`;
   }
   return value;

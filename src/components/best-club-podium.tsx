@@ -8,6 +8,7 @@ type Props = {
   entries: PodiumClub[];
   /** true when showing A–Z placeholders because nobody has votes yet */
   isPlaceholder: boolean;
+  hideHeading?: boolean;
 };
 
 const RANK_META = {
@@ -84,23 +85,25 @@ function PodiumSlot({
   );
 }
 
-export function BestClubPodium({ entries, isPlaceholder }: Props) {
+export function BestClubPodium({ entries, isPlaceholder, hideHeading }: Props) {
   const first = entries[0];
   const second = entries[1];
   const third = entries[2];
 
   return (
     <section className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <h2 className="font-[family-name:var(--font-display)] text-2xl">
-          BXH Best Club
-        </h2>
-        {isPlaceholder ? (
-          <p className="text-sm text-[var(--muted)]">
-            Chưa có vote — đang hiện 3 club theo A–Z
-          </p>
-        ) : null}
-      </div>
+      {hideHeading ? null : (
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl">
+            BXH Best Club
+          </h2>
+          {isPlaceholder ? (
+            <p className="text-sm text-[var(--muted)]">
+              Chưa có vote — đang hiện 3 club theo A–Z
+            </p>
+          ) : null}
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--surface)] px-3 pb-0 pt-8 sm:px-6">
         <div className="mx-auto flex max-w-2xl items-end justify-center gap-2 sm:gap-4">

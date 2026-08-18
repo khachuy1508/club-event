@@ -129,7 +129,7 @@ async function main() {
       create: {
         name: `Sinh Vien Demo ${i}`,
         studentId,
-        major: "Biotechnology",
+        major: "ICT",
         passwordHash,
         role: Role.STUDENT,
       },

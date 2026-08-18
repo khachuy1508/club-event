@@ -4,6 +4,8 @@ import { Role } from "@/generated/prisma/client";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { studentIdSchema } from "@/lib/validators";
+import { assertCheckInAllowed } from "@/lib/event-hours";
+import { publishStudentCheckIn } from "@/lib/realtime";
 import { verifyStudentQrToken } from "@/lib/qr";
 
 export async function POST(request: Request) {
@@ -53,12 +55,21 @@ export async function POST(request: Request) {
     );
   }
 
+  const windowCheck = await assertCheckInAllowed();
+  if (!windowCheck.ok) {
+    return NextResponse.json(
+      { ok: false, message: windowCheck.message },
+      { status: 403 },
+    );
+  }
+
   try {
     await prisma.checkIn.create({
       data: {
         studentId: student.id,
         clubId: session.user.clubId,
         checkedInById: session.user.id,
+        slotName: windowCheck.slotName,
       },
     });
   } catch {
@@ -71,6 +82,23 @@ export async function POST(request: Request) {
       { status: 409 },
     );
   }
+
+  const clubName =
+    session.user.clubName ??
+    (
+      await prisma.club.findUnique({
+        where: { id: session.user.clubId },
+        select: { name: true },
+      })
+    )?.name ??
+    "club";
+
+  await publishStudentCheckIn(student.id, {
+    clubId: session.user.clubId,
+    clubName,
+    slotName: windowCheck.slotName,
+    at: new Date().toISOString(),
+  });
 
   revalidatePath("/qr");
   revalidatePath("/history");

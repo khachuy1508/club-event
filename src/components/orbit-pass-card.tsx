@@ -4,6 +4,7 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { GraduationCap, IdCard, UserRound, X } from "lucide-react";
+import { logoutAction } from "@/lib/actions";
 
 type Props = {
   token: string;
@@ -43,7 +44,10 @@ export function OrbitPassCard({ token, studentId, name, major }: Props) {
           />
         </dl>
 
-        <div className="flex w-[6.25rem] shrink-0 flex-col justify-center border-l border-violet-200 pl-3 text-center sm:w-[11.5rem] sm:pl-5">
+        <div className="flex w-[6.25rem] shrink-0 flex-col justify-center gap-1 border-l border-violet-200 pl-3 text-center sm:w-[11.5rem] sm:gap-2 sm:pl-5">
+          <p className="text-[7px] leading-tight text-slate-500 sm:text-[11px] sm:leading-snug">
+            Ấn vào mã QR để phóng to
+          </p>
           <button
             type="button"
             onClick={() => setOpen(true)}
@@ -61,6 +65,14 @@ export function OrbitPassCard({ token, studentId, name, major }: Props) {
               className="mx-auto h-auto w-full"
             />
           </button>
+          <form action={logoutAction} className="w-full">
+            <button
+              type="submit"
+              className="w-full rounded-md border border-violet-200 bg-white/90 px-1 py-1 text-[7px] font-medium leading-tight text-violet-800 sm:rounded-xl sm:px-3 sm:py-2 sm:text-sm"
+            >
+              Đăng xuất
+            </button>
+          </form>
         </div>
       </div>
       <p className="mt-2 text-center text-[9px] leading-snug text-slate-500 sm:mt-4 sm:text-sm">

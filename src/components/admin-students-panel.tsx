@@ -11,6 +11,7 @@ export type AdminStudentRow = {
   checkIns: {
     id: string;
     clubName: string;
+    slotName: string | null;
     createdAt: string;
   }[];
   voteClubName: string | null;
@@ -49,6 +50,10 @@ function ResetStudentPasswordButton({
       </button>
     </ActionForm>
   );
+}
+
+function slotLabel(clubName: string, slotName: string | null) {
+  return slotName ? `${clubName} (${slotName})` : `${clubName} (—)`;
 }
 
 function formatWhen(iso: string) {
@@ -145,10 +150,12 @@ function StudentDetailModal({
                     key={item.id}
                     className="flex items-start justify-between gap-3 py-3 text-sm"
                   >
-                    <span className="font-medium">{item.clubName}</span>
-                    <span className="shrink-0 text-[var(--muted)]">
-                      {formatWhen(item.createdAt)}
-                    </span>
+                  <span className="font-medium">{item.clubName}</span>
+                  <span className="shrink-0 text-[var(--muted)]">
+                    {item.slotName ?? "—"}
+                    {" · "}
+                    {formatWhen(item.createdAt)}
+                  </span>
                   </li>
                 ))}
               </ul>
@@ -238,19 +245,23 @@ export function AdminStudentsPanel({ students }: Props) {
               <th className="px-3 py-2 font-medium">MSSV</th>
               <th className="px-3 py-2 font-medium">Họ tên</th>
               <th className="px-3 py-2 font-medium">Clubs đã đến</th>
+              <th className="px-3 py-2 font-medium">Khung giờ</th>
               <th className="px-3 py-2 font-medium">Vote</th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-[var(--muted)]">
+                <td colSpan={5} className="px-3 py-8 text-center text-[var(--muted)]">
                   Không tìm thấy sinh viên.
                 </td>
               </tr>
             ) : (
               filtered.map((student) => {
                 const clubNames = student.checkIns.map((c) => c.clubName);
+                const slotNames = student.checkIns.map((c) =>
+                  slotLabel(c.clubName, c.slotName),
+                );
                 return (
                   <tr
                     key={student.id}
@@ -270,6 +281,9 @@ export function AdminStudentsPanel({ students }: Props) {
                     <td className="px-3 py-3">{student.name}</td>
                     <td className="px-3 py-3">
                       <ClubsCell names={clubNames} />
+                    </td>
+                    <td className="px-3 py-3">
+                      <ClubsCell names={slotNames} />
                     </td>
                     <td className="px-3 py-3">
                       {student.voteClubName ?? (

@@ -9,11 +9,14 @@ import { signIn, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { parseClubLogo } from "@/lib/logo";
+import { assertCheckInAllowed, EVENT_SETTINGS_ID } from "@/lib/event-hours";
+import { publishStudentCheckIn } from "@/lib/realtime";
 import {
   DEFAULT_STUDENT_PASSWORD,
   MAX_CLUBS,
   MIN_CHECKINS_TO_VOTE,
   createStaffSchema,
+  eventHoursSchema,
   opinionSchema,
   registerSchema,
   resetStaffPasswordSchema,
@@ -179,12 +182,18 @@ export async function checkInAction(input: {
   }
   studentName = student.name;
 
+  const windowCheck = await assertCheckInAllowed();
+  if (!windowCheck.ok) {
+    return { ok: false, message: windowCheck.message };
+  }
+
   try {
     await prisma.checkIn.create({
       data: {
         studentId: student.id,
         clubId,
         checkedInById: session.user.id,
+        slotName: windowCheck.slotName,
       },
     });
   } catch {
@@ -194,6 +203,19 @@ export async function checkInAction(input: {
       studentName,
     };
   }
+
+  const clubName =
+    session.user.clubName ??
+    (await prisma.club.findUnique({ where: { id: clubId }, select: { name: true } }))
+      ?.name ??
+    "club";
+
+  await publishStudentCheckIn(student.id, {
+    clubId,
+    clubName,
+    slotName: windowCheck.slotName,
+    at: new Date().toISOString(),
+  });
 
   revalidatePath("/scan");
   revalidatePath("/admin");
@@ -511,4 +533,37 @@ export async function resetStudentPasswordAction(
     ok: true,
     message: `Đã reset mật khẩu cho ${user.studentId}`,
   };
+}
+
+export async function saveEventHoursAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireSession([Role.ADMIN]);
+
+  const parsed = eventHoursSchema.safeParse({
+    morningName: formData.get("morningName"),
+    morningStart: formData.get("morningStart"),
+    morningEnd: formData.get("morningEnd"),
+    afternoonName: formData.get("afternoonName"),
+    afternoonStart: formData.get("afternoonStart"),
+    afternoonEnd: formData.get("afternoonEnd"),
+  });
+
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ",
+    };
+  }
+
+  await prisma.eventSettings.upsert({
+    where: { id: EVENT_SETTINGS_ID },
+    create: { id: EVENT_SETTINGS_ID, ...parsed.data },
+    update: parsed.data,
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/scan");
+  return { ok: true, message: "Đã lưu khung giờ event" };
 }

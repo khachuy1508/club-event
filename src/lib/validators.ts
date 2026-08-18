@@ -81,6 +81,49 @@ export const MAX_CLUBS = 20;
 export const MIN_CHECKINS_TO_VOTE = 3;
 export const DEFAULT_STUDENT_PASSWORD = "Clubday@2026";
 
+const timeHm = z
+  .string()
+  .trim()
+  .transform((value) => {
+    const match = /^(\d{1,2}):([0-5]\d)/.exec(value);
+    if (!match) return value;
+    return `${match[1].padStart(2, "0")}:${match[2]}`;
+  })
+  .pipe(z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Giờ phải dạng HH:mm"));
+
+function hmToMinutes(value: string) {
+  const [hours, minutes] = value.split(":").map(Number);
+  return hours * 60 + minutes;
+}
+
+export const eventHoursSchema = z
+  .object({
+    morningName: z.string().trim().min(1, "Nhập tên khung sáng").max(32),
+    morningStart: timeHm,
+    morningEnd: timeHm,
+    afternoonName: z.string().trim().min(1, "Nhập tên khung chiều").max(32),
+    afternoonStart: timeHm,
+    afternoonEnd: timeHm,
+  })
+  .refine((data) => hmToMinutes(data.morningStart) < hmToMinutes(data.morningEnd), {
+    message: "Giờ kết thúc sáng phải sau giờ bắt đầu",
+    path: ["morningEnd"],
+  })
+  .refine(
+    (data) => hmToMinutes(data.afternoonStart) < hmToMinutes(data.afternoonEnd),
+    {
+      message: "Giờ kết thúc chiều phải sau giờ bắt đầu",
+      path: ["afternoonEnd"],
+    },
+  )
+  .refine(
+    (data) => hmToMinutes(data.morningEnd) <= hmToMinutes(data.afternoonStart),
+    {
+      message: "Khung sáng và chiều không được chồng giờ",
+      path: ["afternoonStart"],
+    },
+  );
+
 export function slugify(input: string) {
   return input
     .toLowerCase()
