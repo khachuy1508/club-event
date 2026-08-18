@@ -15,17 +15,27 @@ type Props = ClubPassportBoardProps & {
   userId: string;
   pusherKey: string | null;
   pusherCluster: string | null;
+  onCheckInSuccess?: () => void;
+  onToastDismiss?: () => void;
 };
 
 export function PassportLiveBoard({
   userId,
   pusherKey,
   pusherCluster,
+  onCheckInSuccess,
+  onToastDismiss,
   ...initial
 }: Props) {
   const [board, setBoard] = useState<ClubPassportBoardProps>(initial);
   const [toast, setToast] = useState<string | null>(null);
-  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onCheckInSuccessRef = useRef(onCheckInSuccess);
+  const onToastDismissRef = useRef(onToastDismiss);
+
+  useEffect(() => {
+    onCheckInSuccessRef.current = onCheckInSuccess;
+    onToastDismissRef.current = onToastDismiss;
+  }, [onCheckInSuccess, onToastDismiss]);
 
   const refreshStamps = useCallback(async () => {
     try {
@@ -39,9 +49,13 @@ export function PassportLiveBoard({
   }, []);
 
   const showToast = useCallback((message: string) => {
+    onCheckInSuccessRef.current?.();
     setToast(message);
-    if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setToast(null), 8000);
+  }, []);
+
+  const dismissToast = useCallback(() => {
+    setToast(null);
+    onToastDismissRef.current?.();
   }, []);
 
   useEffect(() => {
@@ -65,7 +79,6 @@ export function PassportLiveBoard({
       channel.unbind(CHECKIN_EVENT, onCheckIn);
       pusher.unsubscribe(channelName);
       pusher.disconnect();
-      if (hideTimer.current) clearTimeout(hideTimer.current);
     };
   }, [userId, pusherKey, pusherCluster, refreshStamps, showToast]);
 
@@ -82,7 +95,7 @@ export function PassportLiveBoard({
               </p>
               <button
                 type="button"
-                onClick={() => setToast(null)}
+                onClick={dismissToast}
                 className="mt-3 w-full rounded-md px-2 py-1.5 text-sm font-medium text-emerald-800 hover:bg-emerald-100"
               >
                 Đóng

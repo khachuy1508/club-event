@@ -11,14 +11,22 @@ type Props = {
   studentId: string;
   name: string;
   major: string;
+  qrHidden?: boolean;
 };
 
-export function OrbitPassCard({ token, studentId, name, major }: Props) {
+export function OrbitPassCard({
+  token,
+  studentId,
+  name,
+  major,
+  qrHidden = false,
+}: Props) {
   const [open, setOpen] = useState(false);
   const titleId = useId();
+  const showQrModal = open && !qrHidden;
 
   useEffect(() => {
-    if (!open) return;
+    if (!showQrModal) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
@@ -29,7 +37,7 @@ export function OrbitPassCard({ token, studentId, name, major }: Props) {
       document.body.style.overflow = previous;
       window.removeEventListener("keydown", onKey);
     };
-  }, [open]);
+  }, [showQrModal]);
 
   return (
     <section className="min-w-0 rounded-[1.2rem] border border-white/70 bg-white/85 p-3 backdrop-blur-md sm:rounded-[1.6rem] sm:p-6">
@@ -45,26 +53,32 @@ export function OrbitPassCard({ token, studentId, name, major }: Props) {
         </dl>
 
         <div className="flex w-[6.25rem] shrink-0 flex-col justify-center gap-1 border-l border-violet-200 pl-3 text-center sm:w-[11.5rem] sm:gap-2 sm:pl-5">
-          <p className="text-[7px] leading-tight text-slate-500 sm:text-[11px] sm:leading-snug">
-            Ấn vào mã QR để phóng to
-          </p>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="w-full rounded-xl border border-violet-200 bg-white p-1.5 sm:rounded-2xl sm:p-3"
-            aria-label="Phóng to mã QR"
-          >
-            <p className="mb-0.5 text-[7px] font-semibold tracking-[0.12em] text-violet-700 sm:mb-1.5 sm:text-[10px] sm:tracking-[0.16em]">
-              ORBIT PASS
-            </p>
-            <QRCodeSVG
-              value={token}
-              size={160}
-              level="M"
-              includeMargin={false}
-              className="mx-auto h-auto w-full"
-            />
-          </button>
+          {qrHidden ? (
+            <div className="flex min-h-[6.25rem] items-center justify-center sm:min-h-[11.5rem]" />
+          ) : (
+            <>
+              <p className="text-[7px] leading-tight text-slate-500 sm:text-[11px] sm:leading-snug">
+                Ấn vào mã QR để phóng to
+              </p>
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="w-full rounded-xl border border-violet-200 bg-white p-1.5 sm:rounded-2xl sm:p-3"
+                aria-label="Phóng to mã QR"
+              >
+                <p className="mb-0.5 text-[7px] font-semibold tracking-[0.12em] text-violet-700 sm:mb-1.5 sm:text-[10px] sm:tracking-[0.16em]">
+                  ORBIT PASS
+                </p>
+                <QRCodeSVG
+                  value={token}
+                  size={160}
+                  level="M"
+                  includeMargin={false}
+                  className="mx-auto h-auto w-full"
+                />
+              </button>
+            </>
+          )}
           <form action={logoutAction} className="w-full">
             <button
               type="submit"
@@ -79,7 +93,7 @@ export function OrbitPassCard({ token, studentId, name, major }: Props) {
         Scan the QR code at club booths to collect stamps
       </p>
 
-      {open
+      {showQrModal
         ? createPortal(
             <div
               className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/70 p-4"
