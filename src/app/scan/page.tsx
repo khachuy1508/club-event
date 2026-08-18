@@ -1,5 +1,6 @@
 import { Role } from "@/generated/prisma/client";
 import { StaffCheckinPanel } from "@/components/staff-checkin-panel";
+import { logoutAction } from "@/lib/actions";
 import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 
@@ -12,7 +13,7 @@ export default async function ScanPage() {
     : 0;
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-6">
+    <main className="mx-auto flex w-full max-w-xl flex-1 flex-col px-4 pt-3">
       <div className="mb-4">
         <h1 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">
           Check-in — {session.user.clubName ?? "Club"}
@@ -22,6 +23,17 @@ export default async function ScanPage() {
         </p>
       </div>
       <StaffCheckinPanel />
+      <form
+        action={logoutAction}
+        className="mt-auto pt-3 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      >
+        <button
+          type="submit"
+          className="w-full rounded-md border border-[var(--line)] px-4 py-2.5 text-sm text-[var(--ink)] hover:bg-[var(--wash)]"
+        >
+          Đăng xuất
+        </button>
+      </form>
     </main>
   );
 }
