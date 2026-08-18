@@ -1,12 +1,15 @@
 import Pusher from "pusher";
 import {
   CHECKIN_EVENT,
+  LEADERBOARD_CHANNEL,
+  VOTE_EVENT,
   studentChannel,
   type CheckInRealtimePayload,
+  type LeaderboardVotePayload,
 } from "@/lib/realtime-shared";
 
-export type { CheckInRealtimePayload };
-export { CHECKIN_EVENT, studentChannel };
+export type { CheckInRealtimePayload, LeaderboardVotePayload };
+export { CHECKIN_EVENT, LEADERBOARD_CHANNEL, VOTE_EVENT, studentChannel };
 
 function readEnv(name: string) {
   return process.env[name]?.trim() || undefined;
@@ -43,6 +46,19 @@ export async function publishStudentCheckIn(
     await pusher.trigger(studentChannel(userId), CHECKIN_EVENT, payload);
   } catch (error) {
     console.error("[realtime] publish failed", error);
+  }
+}
+
+export async function publishLeaderboardVote(payload: LeaderboardVotePayload) {
+  const pusher = getPusherServer();
+  if (!pusher) {
+    console.error("[realtime] skip leaderboard vote: missing PUSHER_* env");
+    return;
+  }
+  try {
+    await pusher.trigger(LEADERBOARD_CHANNEL, VOTE_EVENT, payload);
+  } catch (error) {
+    console.error("[realtime] leaderboard publish failed", error);
   }
 }
 

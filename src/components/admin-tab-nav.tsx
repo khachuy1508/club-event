@@ -3,12 +3,14 @@
 import Link from "next/link";
 import {
   Clock,
+  LogOut,
   MessageSquareText,
   Trophy,
   UserPlus,
   Users,
   Building2,
 } from "lucide-react";
+import { logoutAction } from "@/lib/actions";
 import { ADMIN_TABS, type AdminTabId } from "@/lib/admin-tabs";
 
 const ICONS = {
@@ -42,6 +44,15 @@ export function AdminTabNav({ active }: { active: AdminTabId }) {
           </Link>
         );
       })}
+      <form action={logoutAction} className="mt-3 border-t border-[var(--line)] pt-3">
+        <button
+          type="submit"
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm text-[var(--muted)] transition hover:bg-[var(--wash)] hover:text-[var(--ink)]"
+        >
+          <LogOut className="h-4 w-4 shrink-0" aria-hidden />
+          Đăng xuất
+        </button>
+      </form>
     </nav>
   );
 }

@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { parseClubLogo } from "@/lib/logo";
 import { assertCheckInAllowed, EVENT_SETTINGS_ID } from "@/lib/event-hours";
-import { publishStudentCheckIn } from "@/lib/realtime";
+import { publishLeaderboardVote, publishStudentCheckIn } from "@/lib/realtime";
 import {
   DEFAULT_STUDENT_PASSWORD,
   MAX_CLUBS,
@@ -281,9 +281,16 @@ export async function voteAction(
     },
   });
 
+  await publishLeaderboardVote({
+    clubId,
+    clubName: club.name,
+    at: new Date().toISOString(),
+  });
+
   revalidatePath("/vote");
   revalidatePath("/qr");
   revalidatePath("/admin");
+  revalidatePath("/leaderboard");
   redirect("/qr");
 }
 

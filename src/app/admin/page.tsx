@@ -1,14 +1,11 @@
 import { Role } from "@/generated/prisma/client";
-import { AppHeader } from "@/components/app-header";
 import { ActionForm } from "@/components/action-form";
 import { AdminClubsPanel } from "@/components/admin-clubs-panel";
 import { AdminEventHoursForm } from "@/components/admin-event-hours-form";
 import { AdminStudentsPanel } from "@/components/admin-students-panel";
 import { AdminTabNav } from "@/components/admin-tab-nav";
-import {
-  BestClubPodium,
-  buildBestClubPodium,
-} from "@/components/best-club-podium";
+import { BestClubPodium } from "@/components/best-club-podium";
+import { buildBestClubPodium } from "@/lib/leaderboard-shared";
 import {
   createStaffAction,
   resetStaffPasswordAction,
@@ -24,7 +21,7 @@ type Props = {
 };
 
 export default async function AdminPage({ searchParams }: Props) {
-  const session = await requireSession([Role.ADMIN]);
+  await requireSession([Role.ADMIN]);
   const params = await searchParams;
   const tab = parseAdminTab(params.tab);
 
@@ -69,10 +66,12 @@ export default async function AdminPage({ searchParams }: Props) {
   }));
 
   const clubNameById = Object.fromEntries(clubs.map((c) => [c.id, c.name]));
+  const logoById = Object.fromEntries(clubs.map((c) => [c.id, c.logoSrc]));
   const leaderboard = voteGroups.map((g) => ({
     clubId: g.clubId,
     name: clubNameById[g.clubId] ?? "Unknown",
     votes: g._count.clubId,
+    logoSrc: logoById[g.clubId] ?? null,
   }));
 
   const totalCheckIns = clubs.reduce((sum, c) => sum + c._count.checkIns, 0);
@@ -80,13 +79,12 @@ export default async function AdminPage({ searchParams }: Props) {
   const podium = buildBestClubPodium(
     leaderboard,
     [...clubs]
-      .map((c) => ({ id: c.id, name: c.name }))
+      .map((c) => ({ id: c.id, name: c.name, logoSrc: c.logoSrc }))
       .sort((a, b) => a.name.localeCompare(b.name, "vi")),
   );
 
   return (
     <>
-      <AppHeader user={session.user} />
       <div className="mx-auto flex w-full max-w-6xl flex-1 items-start gap-4 px-4 py-8 sm:gap-6 lg:gap-8">
         <aside className="sticky top-6 w-40 shrink-0 sm:w-52">
           <p className="mb-3 font-[family-name:var(--font-display)] text-lg text-[var(--ink)] lg:mb-4">
@@ -99,7 +97,7 @@ export default async function AdminPage({ searchParams }: Props) {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">
-              Admin dashboard
+              Club day
             </h1>
           </div>
           <Link
@@ -113,7 +111,7 @@ export default async function AdminPage({ searchParams }: Props) {
         <section className="grid gap-3 sm:grid-cols-3">
           <Stat label="Số sinh viên tham gia" value={students.length} />
           <Stat label="Tổng lượt checkin tại CLUBS" value={totalCheckIns} />
-          <Stat label="Tổng vote" value={totalVotes} />
+          <Stat label="Tổng vote" value={totalVotes} highlight />
         </section>
 
         <div className="min-h-[320px]">
@@ -319,11 +317,25 @@ export default async function AdminPage({ searchParams }: Props) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: number }) {
+function Stat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
   return (
     <div className="rounded-xl border border-[var(--line)] bg-[var(--surface)] px-4 py-5">
       <p className="text-sm text-[var(--muted)]">{label}</p>
-      <p className="mt-1 font-[family-name:var(--font-display)] text-3xl">{value}</p>
+      <p
+        className={`mt-1 font-[family-name:var(--font-display)] text-4xl font-semibold leading-none ${
+          highlight ? "text-[var(--accent)]" : ""
+        }`}
+      >
+        {value}
+      </p>
     </div>
   );
 }
