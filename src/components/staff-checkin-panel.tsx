@@ -37,16 +37,8 @@ export function StaffCheckinPanel() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="space-y-3">
-        <h2 className="font-[family-name:var(--font-display)] text-xl text-[var(--ink)]">
-          Quét QR sinh viên
-        </h2>
-        <p className="text-sm text-[var(--muted)]">
-          Bật camera để quét. Sau mỗi lần quét, camera tắt — bấm &quot;Tiếp tục
-          quét&quot; trên thông báo để bật lại.
-        </p>
-
+    <div className="space-y-4">
+      <section className="space-y-2">
         <QrScanner
           active={cameraOn}
           onStop={() => setCameraOn(false)}
@@ -81,12 +73,12 @@ export function StaffCheckinPanel() {
         </div>
       </section>
 
-      <section className="space-y-3 border-t border-[var(--line)] pt-6">
+      <section className="space-y-2 border-t border-[var(--line)] pt-3">
         <h2 className="font-[family-name:var(--font-display)] text-xl text-[var(--ink)]">
-          Fallback: nhập MSSV
+          Hoặc nhập mssv.
         </h2>
         <form
-          className="flex flex-col gap-3 sm:flex-row"
+          className="flex flex-col gap-2 sm:flex-row"
           onSubmit={(event) => {
             event.preventDefault();
             setCameraOn(false);

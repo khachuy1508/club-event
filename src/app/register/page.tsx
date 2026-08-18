@@ -4,7 +4,6 @@ import { auth } from "@/lib/auth";
 import { registerStudentAction } from "@/lib/actions";
 import { homeForRole } from "@/lib/session";
 import { ActionForm } from "@/components/action-form";
-import { AppHeader } from "@/components/app-header";
 import { USTH_MAJORS } from "@/lib/majors";
 
 export default async function RegisterPage() {
@@ -14,9 +13,7 @@ export default async function RegisterPage() {
   }
 
   return (
-    <>
-      <AppHeader />
-      <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
         <h1 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">
           Đăng ký sinh viên
         </h1>
@@ -96,7 +93,6 @@ export default async function RegisterPage() {
             Đăng nhập
           </Link>
         </p>
-      </main>
-    </>
+    </main>
   );
 }
