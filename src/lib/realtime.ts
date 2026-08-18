@@ -8,11 +8,15 @@ import {
 export type { CheckInRealtimePayload };
 export { CHECKIN_EVENT, studentChannel };
 
+function readEnv(name: string) {
+  return process.env[name]?.trim() || undefined;
+}
+
 function getPusherServer() {
-  const appId = process.env.PUSHER_APP_ID;
-  const key = process.env.PUSHER_KEY;
-  const secret = process.env.PUSHER_SECRET;
-  const cluster = process.env.PUSHER_CLUSTER;
+  const appId = readEnv("PUSHER_APP_ID");
+  const key = readEnv("PUSHER_KEY");
+  const secret = readEnv("PUSHER_SECRET");
+  const cluster = readEnv("PUSHER_CLUSTER");
   if (!appId || !key || !secret || !cluster) {
     return null;
   }
@@ -31,7 +35,10 @@ export async function publishStudentCheckIn(
   payload: CheckInRealtimePayload,
 ) {
   const pusher = getPusherServer();
-  if (!pusher) return;
+  if (!pusher) {
+    console.error("[realtime] skip publish: missing PUSHER_* env");
+    return;
+  }
   try {
     await pusher.trigger(studentChannel(userId), CHECKIN_EVENT, payload);
   } catch (error) {
@@ -40,8 +47,8 @@ export async function publishStudentCheckIn(
 }
 
 export function getPublicPusherConfig() {
-  const key = process.env.NEXT_PUBLIC_PUSHER_KEY;
-  const cluster = process.env.NEXT_PUBLIC_PUSHER_CLUSTER;
+  const key = readEnv("NEXT_PUBLIC_PUSHER_KEY") ?? readEnv("PUSHER_KEY");
+  const cluster = readEnv("NEXT_PUBLIC_PUSHER_CLUSTER") ?? readEnv("PUSHER_CLUSTER");
   if (!key || !cluster) return null;
   return { key, cluster };
 }

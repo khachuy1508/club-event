@@ -187,6 +187,19 @@ export async function checkInAction(input: {
     return { ok: false, message: windowCheck.message };
   }
 
+  const clubName =
+    session.user.clubName ??
+    (await prisma.club.findUnique({ where: { id: clubId }, select: { name: true } }))
+      ?.name ??
+    "club";
+
+  const payload = {
+    clubId,
+    clubName,
+    slotName: windowCheck.slotName,
+    at: new Date().toISOString(),
+  };
+
   try {
     await prisma.checkIn.create({
       data: {
@@ -197,6 +210,7 @@ export async function checkInAction(input: {
       },
     });
   } catch {
+    await publishStudentCheckIn(student.id, payload);
     return {
       ok: false,
       message: `${studentName} đã check-in tại club này rồi`,
@@ -204,22 +218,10 @@ export async function checkInAction(input: {
     };
   }
 
-  const clubName =
-    session.user.clubName ??
-    (await prisma.club.findUnique({ where: { id: clubId }, select: { name: true } }))
-      ?.name ??
-    "club";
-
-  await publishStudentCheckIn(student.id, {
-    clubId,
-    clubName,
-    slotName: windowCheck.slotName,
-    at: new Date().toISOString(),
-  });
+  await publishStudentCheckIn(student.id, payload);
 
   revalidatePath("/scan");
   revalidatePath("/admin");
-  revalidatePath("/qr");
   revalidatePath("/history");
   revalidatePath("/vote");
 

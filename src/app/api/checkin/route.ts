@@ -63,26 +63,6 @@ export async function POST(request: Request) {
     );
   }
 
-  try {
-    await prisma.checkIn.create({
-      data: {
-        studentId: student.id,
-        clubId: session.user.clubId,
-        checkedInById: session.user.id,
-        slotName: windowCheck.slotName,
-      },
-    });
-  } catch {
-    return NextResponse.json(
-      {
-        ok: false,
-        message: `${student.name} đã check-in tại club này rồi`,
-        studentName: student.name,
-      },
-      { status: 409 },
-    );
-  }
-
   const clubName =
     session.user.clubName ??
     (
@@ -93,14 +73,36 @@ export async function POST(request: Request) {
     )?.name ??
     "club";
 
-  await publishStudentCheckIn(student.id, {
+  const payload = {
     clubId: session.user.clubId,
     clubName,
     slotName: windowCheck.slotName,
     at: new Date().toISOString(),
-  });
+  };
 
-  revalidatePath("/qr");
+  try {
+    await prisma.checkIn.create({
+      data: {
+        studentId: student.id,
+        clubId: session.user.clubId,
+        checkedInById: session.user.id,
+        slotName: windowCheck.slotName,
+      },
+    });
+  } catch {
+    await publishStudentCheckIn(student.id, payload);
+    return NextResponse.json(
+      {
+        ok: false,
+        message: `${student.name} đã check-in tại club này rồi`,
+        studentName: student.name,
+      },
+      { status: 409 },
+    );
+  }
+
+  await publishStudentCheckIn(student.id, payload);
+
   revalidatePath("/history");
   revalidatePath("/admin");
   revalidatePath("/vote");
