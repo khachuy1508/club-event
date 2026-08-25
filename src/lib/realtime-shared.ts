@@ -1,5 +1,6 @@
 export const CHECKIN_EVENT = "checkin";
 export const VOTE_EVENT = "vote";
+export const GIFT_REDEEMED_EVENT = "gift-redeemed";
 export const LEADERBOARD_CHANNEL = "leaderboard";
 
 export type CheckInRealtimePayload = {
@@ -12,6 +13,11 @@ export type CheckInRealtimePayload = {
 export type LeaderboardVotePayload = {
   clubId: string;
   clubName: string;
+  at: string;
+};
+
+export type GiftRedeemedRealtimePayload = {
+  giftRedeemed: boolean;
   at: string;
 };
 

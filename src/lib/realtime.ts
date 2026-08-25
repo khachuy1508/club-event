@@ -1,15 +1,27 @@
 import Pusher from "pusher";
 import {
   CHECKIN_EVENT,
+  GIFT_REDEEMED_EVENT,
   LEADERBOARD_CHANNEL,
   VOTE_EVENT,
   studentChannel,
   type CheckInRealtimePayload,
+  type GiftRedeemedRealtimePayload,
   type LeaderboardVotePayload,
 } from "@/lib/realtime-shared";
 
-export type { CheckInRealtimePayload, LeaderboardVotePayload };
-export { CHECKIN_EVENT, LEADERBOARD_CHANNEL, VOTE_EVENT, studentChannel };
+export type {
+  CheckInRealtimePayload,
+  GiftRedeemedRealtimePayload,
+  LeaderboardVotePayload,
+};
+export {
+  CHECKIN_EVENT,
+  GIFT_REDEEMED_EVENT,
+  LEADERBOARD_CHANNEL,
+  VOTE_EVENT,
+  studentChannel,
+};
 
 function readEnv(name: string) {
   return process.env[name]?.trim() || undefined;
@@ -59,6 +71,23 @@ export async function publishLeaderboardVote(payload: LeaderboardVotePayload) {
     await pusher.trigger(LEADERBOARD_CHANNEL, VOTE_EVENT, payload);
   } catch (error) {
     console.error("[realtime] leaderboard publish failed", error);
+  }
+}
+
+/** No-op when Pusher env is missing so admin gift mark still works. */
+export async function publishStudentGiftRedeemed(
+  userId: string,
+  payload: GiftRedeemedRealtimePayload,
+) {
+  const pusher = getPusherServer();
+  if (!pusher) {
+    console.error("[realtime] skip gift-redeemed: missing PUSHER_* env");
+    return;
+  }
+  try {
+    await pusher.trigger(studentChannel(userId), GIFT_REDEEMED_EVENT, payload);
+  } catch (error) {
+    console.error("[realtime] gift-redeemed publish failed", error);
   }
 }
 

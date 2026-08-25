@@ -7,8 +7,10 @@ import { ClubPassportBoard } from "@/components/club-stamp-grid";
 import type { ClubPassportBoardProps } from "@/components/club-stamp-grid";
 import {
   CHECKIN_EVENT,
+  GIFT_REDEEMED_EVENT,
   studentChannel,
   type CheckInRealtimePayload,
+  type GiftRedeemedRealtimePayload,
 } from "@/lib/realtime-shared";
 
 type Props = ClubPassportBoardProps & {
@@ -17,6 +19,7 @@ type Props = ClubPassportBoardProps & {
   pusherCluster: string | null;
   onCheckInSuccess?: () => void;
   onToastDismiss?: () => void;
+  onGiftRedeemed?: (giftRedeemed: boolean) => void;
 };
 
 export function PassportLiveBoard({
@@ -25,17 +28,20 @@ export function PassportLiveBoard({
   pusherCluster,
   onCheckInSuccess,
   onToastDismiss,
+  onGiftRedeemed,
   ...initial
 }: Props) {
   const [board, setBoard] = useState<ClubPassportBoardProps>(initial);
   const [toast, setToast] = useState<string | null>(null);
   const onCheckInSuccessRef = useRef(onCheckInSuccess);
   const onToastDismissRef = useRef(onToastDismiss);
+  const onGiftRedeemedRef = useRef(onGiftRedeemed);
 
   useEffect(() => {
     onCheckInSuccessRef.current = onCheckInSuccess;
     onToastDismissRef.current = onToastDismiss;
-  }, [onCheckInSuccess, onToastDismiss]);
+    onGiftRedeemedRef.current = onGiftRedeemed;
+  }, [onCheckInSuccess, onToastDismiss, onGiftRedeemed]);
 
   const refreshStamps = useCallback(async () => {
     try {
@@ -73,10 +79,20 @@ export function PassportLiveBoard({
       void refreshStamps();
     };
 
+    const onGift = (payload: GiftRedeemedRealtimePayload) => {
+      const redeemed = Boolean(payload.giftRedeemed);
+      onGiftRedeemedRef.current?.(redeemed);
+      if (redeemed) {
+        showToast("Bạn đã nhận quà thành công");
+      }
+    };
+
     channel.bind(CHECKIN_EVENT, onCheckIn);
+    channel.bind(GIFT_REDEEMED_EVENT, onGift);
 
     return () => {
       channel.unbind(CHECKIN_EVENT, onCheckIn);
+      channel.unbind(GIFT_REDEEMED_EVENT, onGift);
       pusher.unsubscribe(channelName);
       pusher.disconnect();
     };

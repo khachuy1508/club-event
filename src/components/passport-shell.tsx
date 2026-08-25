@@ -3,7 +3,7 @@
 import { OrbitPassCard } from "@/components/orbit-pass-card";
 import { PassportLiveBoard } from "@/components/passport-live-board";
 import type { ClubPassportBoardProps } from "@/components/club-stamp-grid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function PassportFrame({ children }: { children: React.ReactNode }) {
   return (
@@ -29,7 +29,7 @@ export function PassportShell({
   studentId,
   name,
   major,
-  giftRedeemed = false,
+  giftRedeemed: giftRedeemedProp = false,
   userId,
   pusherKey,
   pusherCluster,
@@ -38,6 +38,11 @@ export function PassportShell({
   votedClubName,
 }: Props) {
   const [hideQr, setHideQr] = useState(false);
+  const [giftRedeemed, setGiftRedeemed] = useState(giftRedeemedProp);
+
+  useEffect(() => {
+    setGiftRedeemed(giftRedeemedProp);
+  }, [giftRedeemedProp]);
 
   return (
     <>
@@ -61,6 +66,7 @@ export function PassportShell({
           votedClubName={votedClubName}
           onCheckInSuccess={() => setHideQr(true)}
           onToastDismiss={() => setHideQr(false)}
+          onGiftRedeemed={setGiftRedeemed}
         />
       </PassportFrame>
     </>

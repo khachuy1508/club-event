@@ -10,8 +10,13 @@
  *   npx tsx scripts/redeem-gift.ts sv202601 --undo
  */
 import "dotenv/config";
+import Pusher from "pusher";
 import { PrismaNeonHttp } from "@prisma/adapter-neon";
 import { PrismaClient, Role } from "../src/generated/prisma/client";
+import {
+  GIFT_REDEEMED_EVENT,
+  studentChannel,
+} from "../src/lib/realtime-shared";
 
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const UNDO = process.argv.includes("--undo");
@@ -38,6 +43,27 @@ function sanitizeDatabaseUrl(url: string) {
   } catch {
     return url;
   }
+}
+
+function readEnv(name: string) {
+  return process.env[name]?.trim() || undefined;
+}
+
+async function publishGiftRedeemed(userId: string, giftRedeemed: boolean) {
+  const appId = readEnv("PUSHER_APP_ID");
+  const key = readEnv("PUSHER_KEY");
+  const secret = readEnv("PUSHER_SECRET");
+  const cluster = readEnv("PUSHER_CLUSTER");
+  if (!appId || !key || !secret || !cluster) {
+    console.warn("Skip Pusher: missing PUSHER_* env (badge sẽ hiện sau khi reload)");
+    return;
+  }
+  const pusher = new Pusher({ appId, key, secret, cluster, useTLS: true });
+  await pusher.trigger(studentChannel(userId), GIFT_REDEEMED_EVENT, {
+    giftRedeemed,
+    at: new Date().toISOString(),
+  });
+  console.log(`✓ Pushed ${GIFT_REDEEMED_EVENT} → ${studentChannel(userId)}`);
 }
 
 const prisma = new PrismaClient({
@@ -89,6 +115,8 @@ async function main() {
     where: { id: user.id },
     data: { giftRedeemed },
   });
+
+  await publishGiftRedeemed(user.id, giftRedeemed);
 
   console.log(
     giftRedeemed

@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession } from "@/lib/session";
 import { parseClubLogo } from "@/lib/logo";
 import { assertCheckInAllowed, EVENT_SETTINGS_ID } from "@/lib/event-hours";
-import { publishLeaderboardVote, publishStudentCheckIn } from "@/lib/realtime";
+import { publishLeaderboardVote, publishStudentCheckIn, publishStudentGiftRedeemed } from "@/lib/realtime";
 import {
   DEFAULT_STUDENT_PASSWORD,
   MAX_CLUBS,
@@ -566,6 +566,11 @@ export async function setStudentGiftRedeemedAction(
   await prisma.user.update({
     where: { id: userId },
     data: { giftRedeemed },
+  });
+
+  await publishStudentGiftRedeemed(userId, {
+    giftRedeemed,
+    at: new Date().toISOString(),
   });
 
   revalidatePath("/admin");
