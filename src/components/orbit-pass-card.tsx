@@ -11,6 +11,7 @@ type Props = {
   studentId: string;
   name: string;
   major: string;
+  giftRedeemed?: boolean;
   qrHidden?: boolean;
 };
 
@@ -19,6 +20,7 @@ export function OrbitPassCard({
   studentId,
   name,
   major,
+  giftRedeemed = false,
   qrHidden = false,
 }: Props) {
   const [open, setOpen] = useState(false);
@@ -43,7 +45,18 @@ export function OrbitPassCard({
     <section className="min-w-0 rounded-[1.2rem] border border-white/70 bg-white/85 p-3 backdrop-blur-md sm:rounded-[1.6rem] sm:p-6">
       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-stretch gap-0">
         <dl className="min-w-0 pr-3 sm:pr-5">
-          <InfoRow icon={<UserRound className="h-4 w-4 sm:h-5 sm:w-5" />} label="FULL NAME" value={name} />
+          <InfoRow
+            icon={<UserRound className="h-4 w-4 sm:h-5 sm:w-5" />}
+            label="FULL NAME"
+            value={name}
+            badge={
+              giftRedeemed ? (
+                <span className="inline-flex shrink-0 items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[9px] font-medium text-emerald-800 sm:text-xs">
+                  Đã đổi quà
+                </span>
+              ) : null
+            }
+          />
           <InfoRow icon={<IdCard className="h-4 w-4 sm:h-5 sm:w-5" />} label="STUDENT ID" value={studentId} />
           <InfoRow
             icon={<GraduationCap className="h-4 w-4 sm:h-5 sm:w-5" />}
@@ -148,10 +161,12 @@ function InfoRow({
   icon,
   label,
   value,
+  badge,
 }: {
   icon: ReactNode;
   label: string;
   value: string;
+  badge?: ReactNode;
 }) {
   return (
     <div className="flex min-w-0 items-start gap-2 border-b border-violet-200 py-2 sm:gap-3 sm:py-3">
@@ -162,8 +177,11 @@ function InfoRow({
         <dt className="text-[10px] font-semibold leading-none tracking-wide text-violet-700 sm:text-xs">
           {label}
         </dt>
-        <dd className="mt-0.5 break-words text-sm font-semibold leading-snug text-slate-800 sm:text-xl">
-          {value}
+        <dd className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
+          <span className="break-words text-sm font-semibold leading-snug text-slate-800 sm:text-xl">
+            {value}
+          </span>
+          {badge}
         </dd>
       </div>
     </div>

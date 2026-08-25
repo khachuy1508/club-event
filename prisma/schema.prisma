@@ -20,6 +20,7 @@ model User {
   major        String?
   passwordHash String
   role         Role     @default(STUDENT)
+  giftRedeemed Boolean  @default(false)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

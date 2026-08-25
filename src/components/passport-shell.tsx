@@ -18,6 +18,7 @@ type Props = ClubPassportBoardProps & {
   studentId: string;
   name: string;
   major: string;
+  giftRedeemed?: boolean;
   userId: string;
   pusherKey: string | null;
   pusherCluster: string | null;
@@ -28,6 +29,7 @@ export function PassportShell({
   studentId,
   name,
   major,
+  giftRedeemed = false,
   userId,
   pusherKey,
   pusherCluster,
@@ -45,6 +47,7 @@ export function PassportShell({
           studentId={studentId}
           name={name}
           major={major}
+          giftRedeemed={giftRedeemed}
           qrHidden={hideQr}
         />
       </PassportFrame>

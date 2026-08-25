@@ -261,6 +261,7 @@ export default async function AdminPage({ searchParams }: Props) {
                 id: student.id,
                 studentId: student.studentId ?? "",
                 name: student.name,
+                giftRedeemed: student.giftRedeemed,
                 checkIns: student.checkIns.map((item) => ({
                   id: item.id,
                   clubName: item.club.name,

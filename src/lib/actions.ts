@@ -544,6 +544,40 @@ export async function resetStudentPasswordAction(
   };
 }
 
+export async function setStudentGiftRedeemedAction(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireSession([Role.ADMIN]);
+
+  const userId = String(formData.get("userId") ?? "");
+  const redeemedRaw = String(formData.get("giftRedeemed") ?? "");
+  const giftRedeemed = redeemedRaw === "true" || redeemedRaw === "1";
+
+  if (!userId) {
+    return { ok: false, message: "Thiếu sinh viên" };
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user || user.role !== Role.STUDENT) {
+    return { ok: false, message: "Không tìm thấy sinh viên" };
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { giftRedeemed },
+  });
+
+  revalidatePath("/admin");
+  revalidatePath("/qr");
+  return {
+    ok: true,
+    message: giftRedeemed
+      ? `Đã đánh dấu ${user.studentId} đổi quà`
+      : `Đã bỏ đánh dấu đổi quà của ${user.studentId}`,
+  };
+}
+
 export async function saveEventHoursAction(
   _prev: ActionResult | null,
   formData: FormData,

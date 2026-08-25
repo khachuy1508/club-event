@@ -14,7 +14,7 @@ export default async function QrPage() {
   const [student, stamps, token] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, major: true },
+      select: { name: true, major: true, giftRedeemed: true },
     }),
     getPassportStampsForUser(session.user.id),
     createStudentQrToken({
@@ -41,6 +41,7 @@ export default async function QrPage() {
             studentId={studentId}
             name={student?.name ?? session.user.name}
             major={student?.major ?? "Chưa cập nhật"}
+            giftRedeemed={student?.giftRedeemed ?? false}
             userId={session.user.id}
             pusherKey={pusher?.key ?? null}
             pusherCluster={pusher?.cluster ?? null}

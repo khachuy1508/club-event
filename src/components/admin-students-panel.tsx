@@ -2,12 +2,16 @@
 
 import { useDeferredValue, useEffect, useId, useMemo, useState } from "react";
 import { ActionForm } from "@/components/action-form";
-import { resetStudentPasswordAction } from "@/lib/actions";
+import {
+  resetStudentPasswordAction,
+  setStudentGiftRedeemedAction,
+} from "@/lib/actions";
 
 export type AdminStudentRow = {
   id: string;
   studentId: string;
   name: string;
+  giftRedeemed: boolean;
   checkIns: {
     id: string;
     clubName: string;
@@ -21,6 +25,14 @@ export type AdminStudentRow = {
 type Props = {
   students: AdminStudentRow[];
 };
+
+function GiftRedeemedBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
+      Đã đổi quà
+    </span>
+  );
+}
 
 function ResetStudentPasswordButton({
   userId,
@@ -48,6 +60,43 @@ function ResetStudentPasswordButton({
       >
         Reset password
       </button>
+    </ActionForm>
+  );
+}
+
+function GiftRedeemedToggle({
+  userId,
+  giftRedeemed,
+}: {
+  userId: string;
+  giftRedeemed: boolean;
+}) {
+  return (
+    <ActionForm action={setStudentGiftRedeemedAction} className="space-y-2">
+      <input type="hidden" name="userId" value={userId} />
+      <input
+        type="hidden"
+        name="giftRedeemed"
+        value={giftRedeemed ? "false" : "true"}
+      />
+      {giftRedeemed ? (
+        <div className="flex flex-wrap items-center gap-2">
+          <GiftRedeemedBadge />
+          <button
+            type="submit"
+            className="rounded-md border border-[var(--line)] px-3 py-1.5 text-sm hover:bg-[var(--wash)]"
+          >
+            Bỏ đánh dấu
+          </button>
+        </div>
+      ) : (
+        <button
+          type="submit"
+          className="rounded-md bg-emerald-600 px-3 py-1.5 text-sm text-white hover:bg-emerald-700"
+        >
+          Đánh dấu đã đổi quà
+        </button>
+      )}
     </ActionForm>
   );
 }
@@ -140,6 +189,14 @@ function StudentDetailModal({
           </div>
 
           <section className="mt-6 space-y-2">
+            <h4 className="text-sm font-semibold text-[var(--ink)]">Đổi quà</h4>
+            <GiftRedeemedToggle
+              userId={student.id}
+              giftRedeemed={student.giftRedeemed}
+            />
+          </section>
+
+          <section className="mt-6 space-y-2">
             <h4 className="text-sm font-semibold text-[var(--ink)]">Check-in</h4>
             {student.checkIns.length === 0 ? (
               <p className="text-sm text-[var(--muted)]">Chưa check-in club nào.</p>
@@ -150,12 +207,12 @@ function StudentDetailModal({
                     key={item.id}
                     className="flex items-start justify-between gap-3 py-3 text-sm"
                   >
-                  <span className="font-medium">{item.clubName}</span>
-                  <span className="shrink-0 text-[var(--muted)]">
-                    {item.slotName ?? "—"}
-                    {" · "}
-                    {formatWhen(item.createdAt)}
-                  </span>
+                    <span className="font-medium">{item.clubName}</span>
+                    <span className="shrink-0 text-[var(--muted)]">
+                      {item.slotName ?? "—"}
+                      {" · "}
+                      {formatWhen(item.createdAt)}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -244,6 +301,7 @@ export function AdminStudentsPanel({ students }: Props) {
             <tr>
               <th className="px-3 py-2 font-medium">MSSV</th>
               <th className="px-3 py-2 font-medium">Họ tên</th>
+              <th className="px-3 py-2 font-medium">Đổi quà</th>
               <th className="px-3 py-2 font-medium">Clubs đã đến</th>
               <th className="px-3 py-2 font-medium">Khung giờ</th>
               <th className="px-3 py-2 font-medium">Vote</th>
@@ -252,7 +310,7 @@ export function AdminStudentsPanel({ students }: Props) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-3 py-8 text-center text-[var(--muted)]">
+                <td colSpan={6} className="px-3 py-8 text-center text-[var(--muted)]">
                   Không tìm thấy sinh viên.
                 </td>
               </tr>
@@ -279,6 +337,13 @@ export function AdminStudentsPanel({ students }: Props) {
                       {student.studentId}
                     </td>
                     <td className="px-3 py-3">{student.name}</td>
+                    <td className="px-3 py-3">
+                      {student.giftRedeemed ? (
+                        <GiftRedeemedBadge />
+                      ) : (
+                        <span className="text-[var(--muted)]">—</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3">
                       <ClubsCell names={clubNames} />
                     </td>
