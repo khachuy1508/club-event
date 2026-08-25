@@ -81,6 +81,10 @@ Tài khoản sau seed:
 | `QR_SECRET` | cùng giá trị local |
 | `NEXTAUTH_URL` | tạm `https://placeholder.vercel.app` — sửa sau lần deploy đầu |
 | `AUTH_URL` | cùng URL production |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST URL ([console](https://console.upstash.com)) |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis REST token |
+
+Rate limit: login 10/phút/IP (+ theo username), register 5/phút/IP. Thiếu env Upstash thì auth vẫn chạy (không limit).
 
 4. Deploy. Build command trong [`vercel.json`](./vercel.json):
    `prisma generate && prisma migrate deploy && next build`

@@ -24,6 +24,7 @@ import {
   studentIdSchema,
 } from "@/lib/validators";
 import { verifyStudentQrToken } from "@/lib/qr";
+import { checkAuthRateLimit } from "@/lib/rate-limit";
 
 export type ActionResult = {
   ok: boolean;
@@ -34,6 +35,14 @@ export async function registerStudentAction(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
+  const rateLimited = await checkAuthRateLimit(
+    "register",
+    String(formData.get("studentId") ?? ""),
+  );
+  if (rateLimited) {
+    return { ok: false, message: rateLimited };
+  }
+
   const parsed = registerSchema.safeParse({
     studentId: formData.get("studentId"),
     name: formData.get("name"),
@@ -91,6 +100,11 @@ export async function loginAction(
   const identifier = String(formData.get("identifier") ?? "");
   const password = String(formData.get("password") ?? "");
   const callbackUrl = String(formData.get("callbackUrl") ?? "");
+
+  const rateLimited = await checkAuthRateLimit("login", identifier);
+  if (rateLimited) {
+    return { ok: false, message: rateLimited };
+  }
 
   const user = await prisma.user.findFirst({
     where: {
