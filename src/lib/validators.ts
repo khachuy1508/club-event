@@ -26,14 +26,18 @@ export const staffUsernameSchema = z
 
 export const registerSchema = z
   .object({
-    studentId: studentIdSchema,
-    name: z.string().trim().min(2, "Họ tên tối thiểu 2 ký tự").max(80),
-    major: z.string().refine(isUsthMajor, "Chọn ngành học"),
-    password: passwordSchema,
-    confirmPassword: z.string().min(1, "Nhập lại mật khẩu"),
+    studentId: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z0-9]{6,12}$/, "Student ID must be 6–12 letters or numbers"),
+    name: z.string().trim().min(2, "Name must be at least 2 characters").max(80),
+    major: z.string().refine(isUsthMajor, "Select a major"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(1, "Confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
-    message: "Mật khẩu nhập lại không khớp",
+    message: "Passwords do not match",
     path: ["confirmPassword"],
   });
 
@@ -49,8 +53,8 @@ export const MAX_LOGO_BYTES = 500 * 1024;
 export const LOGO_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
 export const loginSchema = z.object({
-  identifier: z.string().trim().min(1, "Nhập MSSV hoặc username"),
-  password: z.string().min(1, "Nhập mật khẩu"),
+  identifier: z.string().trim().min(1, "Enter student ID or username"),
+  password: z.string().min(1, "Enter your password"),
 });
 
 export const createStaffSchema = z
@@ -78,7 +82,7 @@ export const resetStaffPasswordSchema = z
   });
 
 export const MAX_CLUBS = 20;
-export const MIN_CHECKINS_TO_VOTE = 3;
+export const MIN_CHECKINS_TO_VOTE = 5;
 export const DEFAULT_STUDENT_PASSWORD = "Clubday@2026";
 
 const timeHm = z

@@ -24,9 +24,13 @@ export default async function LoginPage({ searchParams }: Props) {
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
       <h1 className="font-[family-name:var(--font-display)] text-3xl text-[var(--ink)]">
-        Đăng nhập
+        Sign in
       </h1>
-      <ActionForm action={loginAction} className="mt-8 space-y-4">
+      <ActionForm
+        action={loginAction}
+        className="mt-8 space-y-4"
+        pendingLabel="Signing in…"
+      >
         {callbackUrl ? (
           <input type="hidden" name="callbackUrl" value={callbackUrl} />
         ) : null}
@@ -40,7 +44,7 @@ export default async function LoginPage({ searchParams }: Props) {
           />
         </label>
         <label className="block space-y-1 text-sm">
-          <span>Mật khẩu</span>
+          <span>Password</span>
           <input
             name="password"
             type="password"
@@ -53,13 +57,13 @@ export default async function LoginPage({ searchParams }: Props) {
           type="submit"
           className="w-full rounded-md bg-[var(--accent)] px-4 py-2.5 font-medium text-white hover:bg-[var(--accent-strong)]"
         >
-          Đăng nhập
+          Sign in
         </button>
       </ActionForm>
       <p className="mt-6 text-sm text-[var(--muted)]">
-        Chưa có tài khoản?{" "}
+        Don&apos;t have an account?{" "}
         <Link href="/register" className="text-[var(--accent)] underline-offset-2 hover:underline">
-          Đăng ký ngay
+          Register now
         </Link>
       </p>
     </main>

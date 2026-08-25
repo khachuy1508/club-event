@@ -43,14 +43,14 @@ export async function registerStudentAction(
   });
 
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid data" };
   }
 
   const existing = await prisma.user.findUnique({
     where: { studentId: parsed.data.studentId },
   });
   if (existing) {
-    return { ok: false, message: "MSSV đã được đăng ký" };
+    return { ok: false, message: "This student ID is already registered" };
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
@@ -75,7 +75,7 @@ export async function registerStudentAction(
     if (error instanceof AuthError) {
       return {
         ok: false,
-        message: "Đăng ký thành công nhưng đăng nhập thất bại. Hãy đăng nhập lại.",
+        message: "Account created, but sign-in failed. Please sign in again.",
       };
     }
     throw error;
@@ -126,7 +126,7 @@ export async function loginAction(
   } catch (error) {
     unstable_rethrow(error);
     if (error instanceof AuthError) {
-      return { ok: false, message: "Sai tài khoản hoặc mật khẩu" };
+      return { ok: false, message: "Incorrect username or password" };
     }
     throw error;
   }

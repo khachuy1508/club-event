@@ -1,0 +1,214 @@
+HƯỚNG DẪN SỬ DỤNG CLUB DAY
+==========================
+
+Club Day dùng để check-in booth/club và vote Best Club.
+
+Link sự kiện (Vercel):
+  https://club-event-three.vercel.app
+
+Đăng nhập chung: mở trang đăng nhập, nhập Username và mật khẩu.
+  https://club-event-three.vercel.app/login
+  - Admin: username được cấp (ví dụ: admin)
+  - Tại điểm checkin: username staff được cấp (ví dụ: staff8)
+  - Sinh viên: MSSV (ví dụ: SV202601)
+
+Trang chủ chỉ còn: Club Day, Đăng ký, Đăng nhập.
+  https://club-event-three.vercel.app
+
+
+================================================================
+1. ĐỐI VỚI ADMIN
+================================================================
+
+Đăng nhập xong vào trang quản trị (tiêu đề: Club day).
+  https://club-event-three.vercel.app/admin
+Bên trái là menu. Nút Đăng xuất nằm dưới tab Opinions.
+
+Trên cùng luôn có 3 số liệu:
+  - Số sinh viên tham gia
+  - Tổng lượt checkin tại CLUBS
+  - Tổng vote
+
+Nút Export CSV: tải file báo cáo (MSSV, tên, ngành, lời nhắn, số dấu).
+  https://club-event-three.vercel.app/api/admin/export
+
+
+1.1. Tab Best Club
+------------------
+  https://club-event-three.vercel.app/admin?tab=best
+Xem podium Top 1 / Top 2 / Top 3 (vàng / bạc / đồng) theo số vote.
+Nếu chưa có vote thì hiện 3 club theo A–Z.
+
+
+1.2. Tab Clubs
+--------------
+  https://club-event-three.vercel.app/admin?tab=clubs
+Danh sách club: logo, tên, số check-in, số vote, username staff.
+- Thêm club mới (tên tiếng Việt, tiếng Anh, mã, logo).
+- Sửa thông tin / đổi logo.
+- Ẩn hoặc bật club.
+
+
+1.3. Tab Khung giờ
+------------------
+  https://club-event-three.vercel.app/admin?tab=hours
+Đặt 2 khung giờ mỗi ngày (Sáng / Chiều, giờ Việt Nam).
+Ngoài khung giờ này, điểm checkin KHÔNG check-in được
+(thông báo: "Hiện không trong khung giờ event").
+
+
+1.4. Tab Tạo staff
+------------------
+  https://club-event-three.vercel.app/admin?tab=staff
+- Tạo tài khoản cho người tại điểm checkin:
+  chọn club, username (không khoảng trắng), tên hiển thị, mật khẩu.
+  Một club có thể có nhiều staff.
+- Reset mật khẩu staff nếu quên.
+
+
+1.5. Tab Sinh viên
+------------------
+  https://club-event-three.vercel.app/admin?tab=students
+Tìm / xem danh sách sinh viên: MSSV, tên, ngành,
+các club đã check-in, club đã vote, thời gian.
+
+
+1.6. Tab Opinions
+-----------------
+  https://club-event-three.vercel.app/admin?tab=opinions
+Đọc ý kiến sinh viên gửi từ passport.
+
+
+Trang công khai (không cần đăng nhập admin):
+  https://club-event-three.vercel.app/leaderboard
+  BXH Best Club và danh sách clubs, cập nhật live khi có vote.
+
+
+================================================================
+2. ĐỐI VỚI TẠI ĐIỂM CHECKIN (STAFF)
+================================================================
+
+Tài khoản do Admin tạo và phát trước sự kiện.
+Mỗi tài khoản chỉ check-in được cho ĐÚNG club của mình.
+
+
+2.1. Đăng nhập
+--------------
+Mở trang đăng nhập → Username + mật khẩu.
+  https://club-event-three.vercel.app/login
+Hệ thống đưa thẳng vào trang quét:
+  https://club-event-three.vercel.app/scan
+
+
+2.2. Trang quét (trang duy nhất cần dùng)
+------------------------------------------
+  https://club-event-three.vercel.app/scan
+Trên cùng:
+  - Tên club
+  - Tổng check-in tại booth
+
+Cách check-in (ưu tiên):
+  1. Bấm "Bật camera", cho phép trình duyệt dùng camera.
+  2. Sinh viên mở passport và đưa mã QR.
+     https://club-event-three.vercel.app/qr
+  3. Quét xong sẽ có thông báo thành công / đã check-in rồi / lỗi.
+  4. Bấm "Tiếp tục quét" trên thông báo để bật camera lại.
+     Hoặc bấm "Tắt camera" khi không dùng.
+
+Cách dự phòng:
+  - Mục "Hoặc nhập mssv."
+  - Gõ MSSV của sinh viên → bấm Check-in.
+  - Dùng khi camera không mở, QR mờ, hoặc điện thoại sinh viên hết pin.
+
+Lưu ý:
+  - Ngoài khung giờ event: không check-in được. Liên hệ Admin.
+  - Mỗi sinh viên chỉ check-in 1 lần tại 1 club.
+  - Nếu báo "Đã check-in tại club này rồi": đã ghi nhận, không cần quét lại.
+  - Phải mở đúng link HTTPS ở trên để camera trên điện thoại hoạt động.
+
+Nút Đăng xuất: ở dưới cùng trang quét.
+
+
+================================================================
+3. ĐỐI VỚI SINH VIÊN
+================================================================
+
+3.1. Đăng ký
+------------
+Trang chủ → Đăng ký:
+  https://club-event-three.vercel.app
+  https://club-event-three.vercel.app/register
+Điền:
+  - Mã số sinh viên (6–12 ký tự chữ/số)
+  - Họ và tên
+  - Ngành học
+  - Mật khẩu (từ 6 ký tự) và nhập lại
+
+Bấm "Tạo tài khoản" → vào passport:
+  https://club-event-three.vercel.app/qr
+
+
+3.2. Đăng nhập lại
+------------------
+  https://club-event-three.vercel.app/login
+Username = MSSV, mật khẩu → vào passport:
+  https://club-event-three.vercel.app/qr
+
+
+3.3. Passport (trang chính trong sự kiện)
+-----------------------------------------
+  https://club-event-three.vercel.app/qr
+Gồm 2 phần:
+
+A. Thẻ thông tin + mã QR
+  - Hiện MSSV, tên, ngành và mã QR.
+  - Tăng độ sáng màn hình để điểm checkin dễ quét.
+  - Ấn vào mã QR để phóng to.
+  - Sau khi check-in thành công, sẽ có thông báo
+    "Bạn đã checkin thành công tại ..."
+    và QR ẩn đi cho đến khi bấm Đóng.
+
+B. Bảng stamps + vote + ý kiến
+  - Logo từng club: sáng khi đã check-in, mờ khi chưa đến.
+  - Bấm vào club đã check-in để xem thời gian / khung giờ.
+  - VOTE BEST CLUB:
+      Cần đủ 5 check-in ở 5 club khác nhau.
+      Chỉ vote club mình ĐÃ check-in.
+      Mỗi sinh viên 1 phiếu, không đổi sau khi gửi.
+  - SHARE YOUR OPINION: viết ý kiến (tối đa 300 ký tự), gửi được nhiều lần.
+
+Nút Đăng xuất: nằm dưới cột QR.
+
+
+3.4. Trang khác (nếu cần)
+-------------------------
+  https://club-event-three.vercel.app/leaderboard
+      — xem BXH công khai (không bắt buộc đăng nhập)
+
+
+3.5. Mẹo khi gặp lỗi
+--------------------
+  QR không quét được          → tăng độ sáng; nhờ điểm checkin nhập MSSV
+  QR hết hạn / không hợp lệ   → tải lại trang passport:
+                                https://club-event-three.vercel.app/qr
+  Chưa vote được              → đến thêm club cho đủ 5 dấu
+  Quên mật khẩu               → liên hệ Admin
+
+
+================================================================
+TÓM TẮT LUỒNG NGÀY SỰ KIỆN
+================================================================
+
+Sinh viên đăng ký/đăng nhập → mở passport
+  https://club-event-three.vercel.app/qr
+        |
+        v
+Đưa QR tại từng điểm checkin  →  Staff quét (hoặc nhập MSSV)
+  https://club-event-three.vercel.app/scan
+        |
+        v
+Đủ 5 club  →  Vote Best Club trên passport
+        |
+        v
+Admin theo dõi BXH, sinh viên, ý kiến; xuất CSV khi kết thúc.
+  https://club-event-three.vercel.app/admin

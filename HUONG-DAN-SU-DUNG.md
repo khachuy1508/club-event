@@ -11,7 +11,7 @@ Trong một buổi tổ chức hoạt động:
 1. Sinh viên đăng ký tài khoản bằng **mã số sinh viên (MSSV)**.
 2. Sinh viên đi lần lượt các booth/club, đưa **QR** cho staff.
 3. Staff club **check-in** → hệ thống ghi nhận “đã đến club đó”.
-4. Khi sinh viên có **ít nhất 3 check-in** (3 club khác nhau) → được **vote Best Club** (1 lần, không đổi).
+4. Khi sinh viên có **ít nhất 5 check-in** (5 club khác nhau) → được **vote Best Club** (1 lần, không đổi).
 5. Admin theo dõi danh sách sinh viên, check-in theo club, và bảng xếp hạng vote.
 
 ### Quy tắc nghiệp vụ
@@ -19,7 +19,7 @@ Trong một buổi tổ chức hoạt động:
 | Quy tắc | Chi tiết |
 |--------|----------|
 | Check-in trùng | Mỗi cặp (sinh viên, club) chỉ check-in **1 lần** |
-| Điều kiện vote | Cần **≥ 3** check-in ở các club khác nhau |
+| Điều kiện vote | Cần **≥ 5** check-in ở các club khác nhau |
 | Đối tượng vote | Chỉ vote club **đã từng check-in** |
 | Số lần vote | Mỗi sinh viên **1 phiếu**, không sửa sau khi gửi |
 | Số club tối đa | Soft cap **20** clubs (admin tạo thêm trong dashboard) |
@@ -104,7 +104,7 @@ Sinh viên đăng ký/đăng nhập
         ▼                                    ▼
   Xem lịch sử check-in ◄──────────── Admin xem dashboard
         │
-        │  (≥ 3 club)
+        │  (≥ 5 club)
         ▼
    Vote Best Club (1 lần)
         │
@@ -143,13 +143,13 @@ Sinh viên đăng ký/đăng nhập
 
 #### Vote Best Club
 
-1. Cần đủ **ít nhất 3 check-in**.
+1. Cần đủ **ít nhất 5 check-in**.
 2. Vào `/vote`.
 3. Chọn **một** club trong danh sách club bạn đã check-in.
 4. Bấm **Gửi vote**.
 5. Sau khi gửi: không đổi được phiếu.
 
-Nếu chưa đủ 3 check-in, trang vote sẽ báo còn thiếu bao nhiêu.
+Nếu chưa đủ 5 check-in, trang vote sẽ báo còn thiếu bao nhiêu.
 
 ---
 
@@ -244,7 +244,7 @@ Trên đầu trang `/scan` có **Tổng check-in tại booth** — số lượt 
 
 - [ ] Sinh viên ưu tiên dùng QR; staff chỉ nhập MSSV khi cần
 - [ ] Nếu báo “đã check-in rồi” → giải thích đã ghi nhận, không cần quét lại
-- [ ] Nhắc sinh viên: đủ 3 club mới vote được
+- [ ] Nhắc sinh viên: đủ 5 club mới vote được
 - [ ] Admin thỉnh thoảng F5 `/admin` để theo dõi BXH và số check-in
 
 ### Sau sự kiện
@@ -282,7 +282,7 @@ Route được bảo vệ theo role: vào sai role sẽ bị chuyển về khu v
 | “QR không hợp lệ hoặc đã hết hạn” | Sinh viên refresh trang `/qr` để lấy token mới |
 | “Đã check-in tại club này rồi” | Đúng hành vi — không check-in trùng |
 | “Không tìm thấy sinh viên” | SV chưa đăng ký, hoặc gõ sai MSSV |
-| Chưa vote được | Kiểm tra `/history` đã đủ ≥ 3 club chưa |
+| Chưa vote được | Kiểm tra `/history` đã đủ ≥ 5 club chưa |
 | Port 3000 bị chiếm (local) | Dùng port Next.js báo trong terminal (vd 3001) |
 | Muốn reset data demo | Chạy lại `npm run db:seed` với `DATABASE_URL` Neon (xoá & tạo lại — cẩn thận) |
 

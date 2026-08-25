@@ -8,6 +8,7 @@ type Props = {
   children: React.ReactNode;
   className?: string;
   onSuccess?: () => void;
+  pendingLabel?: string;
 };
 
 function snapshotForm(form: HTMLFormElement) {
@@ -48,7 +49,13 @@ function restoreForm(form: HTMLFormElement, saved: Record<string, string>) {
   }
 }
 
-export function ActionForm({ action, children, className, onSuccess }: Props) {
+export function ActionForm({
+  action,
+  children,
+  className,
+  onSuccess,
+  pendingLabel = "Đang xử lý…",
+}: Props) {
   const [state, formAction, pending] = useActionState(action, null);
   const formRef = useRef<HTMLFormElement>(null);
   const savedRef = useRef<Record<string, string>>({});
@@ -90,7 +97,7 @@ export function ActionForm({ action, children, className, onSuccess }: Props) {
           {state.message}
         </p>
       ) : null}
-      {pending ? <p className="mt-2 text-sm text-[var(--muted)]">Đang xử lý…</p> : null}
+      {pending ? <p className="mt-2 text-sm text-[var(--muted)]">{pendingLabel}</p> : null}
     </form>
   );
 }

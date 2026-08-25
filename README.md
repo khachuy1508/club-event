@@ -1,6 +1,6 @@
 # Club Day — Check-in & Best Club Vote
 
-Web app cho sự kiện club sinh viên: đăng ký bằng MSSV, staff check-in bằng QR (fallback MSSV), đủ 3 check-in thì vote Best Club, kèm admin dashboard.
+Web app cho sự kiện club sinh viên: đăng ký bằng MSSV, staff check-in bằng QR (fallback MSSV), đủ 5 check-in thì vote Best Club, kèm admin dashboard.
 
 **Hướng dẫn sử dụng:** [HUONG-DAN-SU-DUNG.md](./HUONG-DAN-SU-DUNG.md)  
 **Deploy Vercel + Neon:** [DEPLOY.md](./DEPLOY.md)
@@ -44,7 +44,7 @@ Mở [http://localhost:3000](http://localhost:3000) (hoặc port Next.js báo n�
 
 1. **Sinh viên** đăng ký/đăng nhập → trang QR → đưa QR cho staff.
 2. **Staff** đăng nhập → `/scan` → quét QR hoặc nhập MSSV.
-3. Sinh viên đủ **3 check-in** → `/vote` (chỉ vote club đã check-in, 1 lần).
+3. Sinh viên đủ **5 check-in** → `/vote` (chỉ vote club đã check-in, 1 lần).
 4. **Admin** → `/admin`: clubs, staff, danh sách SV, BXH vote, export CSV.
 
 ## Biến môi trường
