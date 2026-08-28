@@ -92,6 +92,7 @@ Rate limit: login 10/phút/IP (+ theo username), register 5/phút/IP. Thiếu en
    - Vercel → Settings → Environment Variables
    - Cập nhật `NEXTAUTH_URL` và `AUTH_URL` = URL đó
    - **Redeploy** (Deployments → … → Redeploy)
+6. Nếu Free hết **data transfer quota**, nâng plan rồi **Redeploy** (hoặc push 1 commit) để site nhận traffic lại.
 
 ## 5. Kiểm tra trên điện thoại (quan trọng)
 
