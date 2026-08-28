@@ -12,6 +12,7 @@ export const USTH_MAJORS = [
   "MST",
   "FST",
   "CHEM",
+  "PHA",
   "MAT",
   "AES",
   "SST/SA",
